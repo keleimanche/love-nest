@@ -1,0 +1,1067 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>💕 我们的恋爱小窝 - 云同步版</title>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+        body {
+            font-family: 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: linear-gradient(145deg, #fff5f7 0%, #fef0f5 100%);
+            background-attachment: fixed;
+            color: #4a3538;
+            min-height: 100vh;
+            padding: 20px 16px 40px;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(2px);
+            border-radius: 32px;
+            padding: 20px 18px;
+            margin-bottom: 18px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.05);
+            transition: all 0.2s ease;
+            border: 1px solid rgba(255, 255, 255, 0.6);
+        }
+        .hero {
+            text-align: center;
+            background: rgba(255, 255, 255, 0.97);
+            border-radius: 48px;
+            padding: 28px 16px 24px;
+            margin-bottom: 20px;
+            box-shadow: 0 12px 28px rgba(242, 167, 179, 0.2);
+        }
+        .hero-icon {
+            font-size: 56px;
+            display: inline-block;
+            animation: float 3s ease-in-out infinite;
+        }
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-8px); }
+            100% { transform: translateY(0px); }
+        }
+        h1 {
+            font-size: 28px;
+            font-weight: 700;
+            margin: 12px 0 4px;
+            background: linear-gradient(135deg, #d46b7a, #b85c6a);
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+        }
+        .sub {
+            color: #b4868f;
+            font-size: 14px;
+            margin-bottom: 16px;
+        }
+        .timer-grid {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin: 16px 0 12px;
+        }
+        .timer-unit {
+            background: #fef2f5;
+            border-radius: 24px;
+            padding: 8px 12px;
+            min-width: 68px;
+            text-align: center;
+        }
+        .timer-number {
+            font-size: 30px;
+            font-weight: 800;
+            color: #e37f8e;
+            line-height: 1.2;
+        }
+        .timer-label {
+            font-size: 11px;
+            color: #c4939d;
+        }
+        .anniversary {
+            background: #fce4e8;
+            display: inline-block;
+            padding: 8px 20px;
+            border-radius: 60px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #b85c6a;
+            margin: 12px 0 6px;
+        }
+        .today-badge {
+            background: #f2a7b3;
+            color: white;
+            animation: pulse 1.2s infinite;
+        }
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(242, 167, 179, 0.6); }
+            70% { box-shadow: 0 0 0 10px rgba(242, 167, 179, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(242, 167, 179, 0); }
+        }
+        .status-badge {
+            font-size: 12px;
+            background: #e9ecef;
+            padding: 4px 12px;
+            border-radius: 40px;
+            display: inline-block;
+        }
+        .online { background: #d4edda; color: #155724; }
+        .offline { background: #f8d7da; color: #721c24; }
+        .photo-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-top: 10px;
+        }
+        .photo-item {
+            aspect-ratio: 1 / 1;
+            background: #fdeef1;
+            border-radius: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 44px;
+            cursor: pointer;
+            transition: 0.2s;
+            overflow: hidden;
+        }
+        .photo-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .photo-item:active { transform: scale(0.96); }
+        .diary-input-row {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 18px;
+        }
+        .diary-input-row input {
+            flex: 1;
+            border: 1.5px solid #f0ced5;
+            background: #fffafb;
+            padding: 12px 18px;
+            border-radius: 40px;
+            font-size: 14px;
+            outline: none;
+            transition: 0.2s;
+        }
+        .diary-input-row input:focus {
+            border-color: #f2a7b3;
+            box-shadow: 0 0 0 3px rgba(242, 167, 179, 0.2);
+        }
+        button {
+            border: none;
+            background: #f2a7b3;
+            color: white;
+            font-weight: 600;
+            padding: 0 24px;
+            border-radius: 40px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: 0.2s;
+            font-family: inherit;
+        }
+        button:active { transform: scale(0.96); }
+        .diary-list {
+            list-style: none;
+            max-height: 340px;
+            overflow-y: auto;
+        }
+        .diary-item {
+            background: #fff9fb;
+            border-radius: 20px;
+            padding: 12px 14px;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            transition: 0.1s;
+        }
+        .diary-text {
+            flex: 1;
+            font-size: 14px;
+            word-break: break-word;
+        }
+        .diary-time {
+            font-size: 10px;
+            color: #caa2ab;
+            white-space: nowrap;
+        }
+        .delete-btn {
+            background: none;
+            color: #ce8f9b;
+            font-size: 18px;
+            padding: 0 6px;
+        }
+        .love-box {
+            background: linear-gradient(145deg, #fff2f5, #ffe6ec);
+            border-radius: 32px;
+            padding: 28px 18px;
+            text-align: center;
+            margin-bottom: 16px;
+            min-height: 110px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 500;
+            color: #a85f6b;
+        }
+        .btn-love {
+            background: #e37f8e;
+            padding: 12px 28px;
+            font-size: 16px;
+            width: 100%;
+        }
+        footer {
+            text-align: center;
+            font-size: 11px;
+            color: #cfaeb6;
+            margin-top: 20px;
+        }
+
+        /* ========== 魔法故事书样式 ========== */
+        .storybook-card {
+            background: linear-gradient(145deg, #fef9f3 0%, #f9f1e8 100%);
+            border-radius: 24px;
+            padding: 20px 16px;
+            margin-bottom: 18px;
+            box-shadow: 0 8px 32px rgba(139, 90, 43, 0.12), inset 0 2px 4px rgba(255, 255, 255, 0.6);
+            position: relative;
+            border: 2px solid #e8d5c4;
+        }
+        .storybook-card::before {
+            content: '📖';
+            position: absolute;
+            top: -16px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 32px;
+            background: #fef9f3;
+            padding: 0 12px;
+            border-radius: 50%;
+        }
+        .storybook-header {
+            text-align: center;
+            margin-bottom: 16px;
+            padding-top: 8px;
+        }
+        .storybook-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: #8b5a2b;
+            margin-bottom: 6px;
+        }
+        .storybook-subtitle {
+            font-size: 12px;
+            color: #a08060;
+        }
+        .book-spread {
+            background: linear-gradient(90deg, #fff9f4 0%, #f8f0e5 50%, #fff9f4 100%);
+            border-radius: 16px;
+            padding: 16px 12px;
+            margin-bottom: 16px;
+            position: relative;
+            box-shadow: inset 0 0 20px rgba(139, 90, 43, 0.05);
+        }
+        .book-spine {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            left: 50%;
+            width: 2px;
+            background: linear-gradient(180deg, #d4c4b0, #c4b4a0, #d4c4b0);
+            transform: translateX(-50%);
+        }
+        .story-list {
+            list-style: none;
+            max-height: 280px;
+            overflow-y: auto;
+            padding-right: 8px;
+        }
+        .story-list::-webkit-scrollbar {
+            width: 6px;
+        }
+        .story-list::-webkit-scrollbar-thumb {
+            background: #d4c4b0;
+            border-radius: 3px;
+        }
+        .story-line {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            padding: 10px 12px;
+            margin-bottom: 10px;
+            border-radius: 12px;
+            transition: all 0.2s;
+            position: relative;
+        }
+        .story-line.left {
+            background: linear-gradient(135deg, #ffeef5 0%, #fff0f5 100%);
+            margin-right: 20%;
+            border-left: 3px solid #f2a7b3;
+        }
+        .story-line.right {
+            background: linear-gradient(135deg, #eef5ff 0%, #f0f5ff 100%);
+            margin-left: 20%;
+            border-left: 3px solid #7eb3f2;
+        }
+        .story-line:hover {
+            transform: translateX(3px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+        .story-avatar {
+            font-size: 22px;
+            flex-shrink: 0;
+        }
+        .story-content {
+            flex: 1;
+        }
+        .story-sentence {
+            font-size: 14px;
+            line-height: 1.6;
+            color: #4a3538;
+            word-break: break-word;
+        }
+        .story-meta {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 6px;
+            font-size: 11px;
+        }
+        .story-time {
+            color: #b8a090;
+        }
+        .like-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            transition: 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 3px;
+        }
+        .like-btn:hover {
+            background: #fce4e8;
+        }
+        .like-btn.liked {
+            color: #f2a7b3;
+        }
+        .story-input-area {
+            display: flex;
+            gap: 10px;
+            align-items: flex-end;
+        }
+        .story-input-area textarea {
+            flex: 1;
+            border: 2px solid #e8d5c4;
+            background: #fffcf8;
+            padding: 12px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            outline: none;
+            resize: none;
+            font-family: inherit;
+            line-height: 1.5;
+            min-height: 48px;
+            max-height: 120px;
+        }
+        .story-input-area textarea:focus {
+            border-color: #d4a574;
+            box-shadow: 0 0 0 3px rgba(212, 165, 116, 0.15);
+        }
+        .story-submit-btn {
+            background: linear-gradient(135deg, #d4a574, #c49464);
+            padding: 12px 24px;
+            white-space: nowrap;
+        }
+        .story-submit-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .turn-indicator {
+            text-align: center;
+            padding: 10px;
+            margin-bottom: 12px;
+            border-radius: 16px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+        .turn-indicator.my-turn {
+            background: linear-gradient(135deg, #ffeef5, #fff0f5);
+            color: #d46b7a;
+        }
+        .turn-indicator.waiting {
+            background: linear-gradient(135deg, #f0f5ff, #eef5ff);
+            color: #6b7ad4;
+        }
+        .sound-controls {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 12px;
+        }
+        .sound-btn {
+            background: rgba(255, 255, 255, 0.8);
+            border: 1px solid #e8d5c4;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: 0.2s;
+            color: #8b5a2b;
+            font-family: inherit;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .sound-btn:hover {
+            background: #fff;
+            border-color: #d4a574;
+        }
+        .sound-btn.active {
+            background: #d4a574;
+            color: white;
+            border-color: #d4a574;
+        }
+        .story-count {
+            text-align: center;
+            font-size: 12px;
+            color: #a08060;
+            margin-top: 8px;
+        }
+        .poster-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 99999;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .poster-modal.show {
+            display: flex;
+        }
+        .poster-content {
+            background: white;
+            border-radius: 24px;
+            padding: 24px;
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
+        }
+        .poster-canvas {
+            width: 100%;
+            max-width: 400px;
+            margin: 0 auto 16px;
+            border-radius: 16px;
+        }
+        .poster-close {
+            background: #f2a7b3;
+            padding: 10px 30px;
+            margin-top: 10px;
+        }
+        @media (max-width: 480px) {
+            .story-line.left { margin-right: 10%; }
+            .story-line.right { margin-left: 10%; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="hero">
+        <div class="hero-icon">💕🐣</div>
+        <h1>我们的恋爱小窝</h1>
+        <div class="sub" id="coupleName">👦 宝贝 & 乖乖 👧</div>
+        <div class="timer-grid">
+            <div class="timer-unit"><div class="timer-number" id="days">0</div><div class="timer-label">天</div></div>
+            <div class="timer-unit"><div class="timer-number" id="hours">0</div><div class="timer-label">时</div></div>
+            <div class="timer-unit"><div class="timer-number" id="minutes">0</div><div class="timer-label">分</div></div>
+            <div class="timer-unit"><div class="timer-number" id="seconds">0</div><div class="timer-label">秒</div></div>
+        </div>
+        <div class="anniversary" id="anniversaryBadge">🎀 距离一周年还有 ? 天</div>
+        <div style="margin-top: 12px;">
+            <span class="status-badge offline" id="connectionStatus">🔴 连接中...</span>
+        </div>
+    </div>
+
+    <div class="card">
+        <div style="font-weight: 700; margin-bottom: 12px;">📸 我们的回忆墙</div>
+        <div class="photo-grid" id="photoGrid"></div>
+        <div style="font-size: 11px; color: #be8d97; margin-top: 12px; text-align: center;">✨ 点击照片放大 ✨</div>
+    </div>
+
+    <!-- ========== 魔法故事书 ========== -->
+    <div class="storybook-card">
+        <div class="storybook-header">
+            <div class="storybook-title">✨ 永远写不完的故事书 ✨</div>
+            <div class="storybook-subtitle">一人一句，共同编织属于我们的故事</div>
+        </div>
+        <div class="book-spread">
+            <div class="book-spine"></div>
+            <ul class="story-list" id="storyList">
+                <li class="story-line left" style="background: linear-gradient(135deg, #fff9f5, #fffbf7); border-left-color: #e8d5c4;">
+                    <span class="story-avatar">📖</span>
+                    <div class="story-content">
+                        <div class="story-sentence" style="color: #a08060; font-style: italic;">故事尚未开始，写下第一句吧...</div>
+                    </div>
+                </li>
+            </ul>
+        </div>
+        <div class="turn-indicator my-turn" id="turnIndicator">💫 轮到你了，写下下一句吧！</div>
+        <div class="story-input-area">
+            <textarea id="storyInput" placeholder="写下你的故事... (一句话，不超过100字)" maxlength="100" rows="2"></textarea>
+            <button class="story-submit-btn" id="storySubmitBtn">📝 提交</button>
+        </div>
+        <div class="sound-controls">
+            <button class="sound-btn" id="rainBtn" data-sound="rain">🌧️ 雨声</button>
+            <button class="sound-btn" id="fireBtn" data-sound="fire">🔥 壁炉</button>
+            <button class="sound-btn" id="stopSoundBtn">🔇 静音</button>
+        </div>
+        <div class="story-count">已书写 <span id="storyCountNum">0</span> 句 · 满100句生成纪念海报</div>
+    </div>
+
+    <!-- 故事海报弹窗 -->
+    <div class="poster-modal" id="posterModal">
+        <div class="poster-content">
+            <h3 style="color: #8b5a2b; margin-bottom: 16px;">🎉 我们的故事书完成了！</h3>
+            <canvas class="poster-canvas" id="posterCanvas" width="400" height="500"></canvas>
+            <p style="font-size: 13px; color: #a08060; margin-bottom: 12px;">长按图片保存到手机 💕</p>
+            <button class="poster-close" id="posterCloseBtn">关闭</button>
+        </div>
+    </div>
+
+    <div class="card">
+        <div style="font-weight: 700; margin-bottom: 12px;">📝 云端碎碎念 · 实时同步</div>
+        <div class="diary-input-row">
+            <input type="text" id="diaryInput" placeholder="写一句想说的话... 对方会立刻看到 💬" maxlength="200">
+            <button id="addDiaryBtn">发布</button>
+        </div>
+        <ul class="diary-list" id="diaryList"></ul>
+    </div>
+
+    <div class="card">
+        <div style="font-weight: 700; margin-bottom: 10px;">💌 情话盲盒</div>
+        <div class="love-box" id="quoteBox">💝 戳一下按钮，拆一句甜甜的情话~</div>
+        <button class="btn-love" id="loveBtn">🎁 拆开盲盒</button>
+    </div>
+    <footer>💖 两个人同时打开，碎碎念会自动同步 💖<br>✨ 点击屏幕还会飘爱心 ✨</footer>
+</div>
+
+<script>
+    const FIREBASE_CONFIG = {
+        apiKey: "AIzaSyALmikJZXqjjqPmqZ3PKeERMsKKrxtgr64",
+        authDomain: "love-nest-1536d.firebaseapp.com",
+        databaseURL: "https://love-nest-1536d-default-rtdb.asia-southeast1.firebasedatabase.app",
+        projectId: "love-nest-1536d",
+        storageBucket: "love-nest-1536d.firebasestorage.app",
+        messagingSenderId: "346144764535",
+        appId: "1:346144764535:web:0cc944b724bdfce5a38c72"
+    };
+
+    const START_DATE = new Date(2025, 5, 1, 20, 0, 0);
+    const YOUR_NAME = "宝贝";
+    const PARTNER_NAME = "乖乖";
+    const MY_ID = "A";
+
+    const PHOTOS = [
+        { url: "", emoji: "🐣" },
+        { url: "", emoji: "🌸" },
+        { url: "", emoji: "🍰" },
+        { url: "", emoji: "🌙" },
+        { url: "", emoji: "🎠" },
+        { url: "", emoji: "💖" }
+    ];
+
+    const LOVE_QUOTES = [
+        "✨ 你是我所有温柔的来源。",
+        "🌙 和你在一起，每一天都发光。",
+        "💕 有你在，连空气都是甜的。",
+        "🏡 你在身边，就是最好的日子。",
+        "🐻 喜欢你，从一而终，认真且怂。",
+        "👀 世界那么大，我的眼里只有你。",
+        "🍬 你笑起来比糖果还甜！",
+        "💐 和你在一起，每天都是情人节。",
+        "🚶‍♂️🚶‍♀️ 余生很长，想和你慢慢走。",
+        "🎀 你永远是我的第一选择。"
+    ];
+
+    firebase.initializeApp(FIREBASE_CONFIG);
+    const db = firebase.database();
+    const diaryRef = db.ref("diary");
+    const storyRef = db.ref("story");
+
+    const statusEl = document.getElementById("connectionStatus");
+    db.ref(".info/connected").on("value", (snap) => {
+        if (snap.val() === true) {
+            statusEl.innerHTML = "🟢 在线 · 实时同步中";
+            statusEl.className = "status-badge online";
+        } else {
+            statusEl.innerHTML = "🔴 离线 · 检查网络";
+            statusEl.className = "status-badge offline";
+        }
+    });
+
+    document.getElementById("coupleName").innerHTML = `👦 ${YOUR_NAME} & ${PARTNER_NAME} 👧`;
+
+    function updateTimer() {
+        const now = new Date();
+        const diff = now - START_DATE;
+        if (diff <= 0) return;
+        const totalSec = Math.floor(diff / 1000);
+        document.getElementById("days").innerText = Math.floor(totalSec / 86400);
+        document.getElementById("hours").innerText = Math.floor((totalSec % 86400) / 3600);
+        document.getElementById("minutes").innerText = Math.floor((totalSec % 3600) / 60);
+        document.getElementById("seconds").innerText = totalSec % 60;
+
+        const oneYearLater = new Date(START_DATE);
+        oneYearLater.setFullYear(oneYearLater.getFullYear() + 1);
+        const remain = oneYearLater - now;
+        const badge = document.getElementById("anniversaryBadge");
+        if (remain <= 0 && remain > -86400000) {
+            badge.innerText = "🎉 今天是一周年纪念日！🎉";
+            badge.classList.add("today-badge");
+        } else if (remain < 0) {
+            badge.innerText = `💝 一周年已过 ${Math.floor(Math.abs(remain)/86400000)} 天`;
+            badge.classList.remove("today-badge");
+        } else {
+            badge.innerText = `🎀 距离一周年还有 ${Math.ceil(remain/86400000)} 天`;
+            badge.classList.remove("today-badge");
+        }
+    }
+    setInterval(updateTimer, 1000);
+    updateTimer();
+
+    const photoGrid = document.getElementById("photoGrid");
+    function buildPhotoWall() {
+        photoGrid.innerHTML = "";
+        PHOTOS.forEach((p, idx) => {
+            const div = document.createElement("div");
+            div.className = "photo-item";
+            if (p.url) {
+                const img = document.createElement("img");
+                img.src = p.url;
+                img.onerror = () => { div.innerHTML = `<span>${p.emoji}</span>`; };
+                div.appendChild(img);
+            } else {
+                div.innerHTML = `<span>${p.emoji}</span>`;
+            }
+            div.onclick = () => {
+                if (p.url) window.open(p.url);
+                else alert("💌 这里放一张你们的合照吧～");
+            };
+            photoGrid.appendChild(div);
+        });
+    }
+    buildPhotoWall();
+
+    const diaryList = document.getElementById("diaryList");
+    const diaryInput = document.getElementById("diaryInput");
+    const addBtn = document.getElementById("addDiaryBtn");
+
+    function escapeHtml(str) {
+        return str.replace(/[&<>]/g, function(m) {
+            if (m === "&") return "&amp;";
+            if (m === "<") return "&lt;";
+            if (m === ">") return "&gt;";
+            return m;
+        });
+    }
+
+    function addDiaryToDOM(key, val) {
+        if (document.getElementById(`d-${key}`)) return;
+        const li = document.createElement("li");
+        li.id = `d-${key}`;
+        li.className = "diary-item";
+        const timeStr = val.timestamp ? new Date(val.timestamp).toLocaleString() : "刚刚";
+        li.innerHTML = `
+            <div class="diary-text">${escapeHtml(val.text)}</div>
+            <div class="diary-time">${timeStr}</div>
+            <button class="delete-btn" data-key="${key}">🗑️</button>
+        `;
+        const delBtn = li.querySelector(".delete-btn");
+        delBtn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            diaryRef.child(key).remove();
+        });
+        diaryList.prepend(li);
+    }
+
+    diaryRef.on("child_added", (snap) => {
+        addDiaryToDOM(snap.key, snap.val());
+    });
+
+    diaryRef.on("child_removed", (snap) => {
+        const item = document.getElementById(`d-${snap.key}`);
+        if (item) item.remove();
+    });
+
+    function publishDiary() {
+        const text = diaryInput.value.trim();
+        if (!text) return;
+        if (text.length > 200) {
+            alert("字数太多啦，不要超过200字~");
+            return;
+        }
+        diaryRef.push({
+            text: text,
+            timestamp: firebase.database.ServerValue.TIMESTAMP
+        });
+        diaryInput.value = "";
+        diaryInput.focus();
+    }
+
+    addBtn.addEventListener("click", publishDiary);
+    diaryInput.addEventListener("keypress", (e) => {
+        if (e.key === "Enter") publishDiary();
+    });
+
+    let lastIdx = -1;
+    const quoteBox = document.getElementById("quoteBox");
+    const loveBtn = document.getElementById("loveBtn");
+    loveBtn.addEventListener("click", () => {
+        let newIdx;
+        do {
+            newIdx = Math.floor(Math.random() * LOVE_QUOTES.length);
+        } while (newIdx === lastIdx && LOVE_QUOTES.length > 1);
+        lastIdx = newIdx;
+        quoteBox.innerHTML = `💗 ${LOVE_QUOTES[newIdx]} 💗`;
+        quoteBox.style.transform = "scale(0.98)";
+        setTimeout(() => { quoteBox.style.transform = "scale(1)"; }, 120);
+    });
+
+    // ========== 故事书功能 ==========
+    const storyList = document.getElementById("storyList");
+    const storyInput = document.getElementById("storyInput");
+    const storySubmitBtn = document.getElementById("storySubmitBtn");
+    const turnIndicator = document.getElementById("turnIndicator");
+    const storyCountNum = document.getElementById("storyCountNum");
+
+    let currentTurn = "A";
+    let storySentences = [];
+    let audioContext = null;
+    let currentSound = null;
+
+    function updateTurnIndicator() {
+        const isMyTurn = currentTurn === MY_ID;
+        if (isMyTurn) {
+            turnIndicator.className = "turn-indicator my-turn";
+            turnIndicator.innerHTML = `💫 轮到 ${YOUR_NAME} 了，写下下一句吧！`;
+            storySubmitBtn.disabled = false;
+            storyInput.disabled = false;
+        } else {
+            turnIndicator.className = "turn-indicator waiting";
+            turnIndicator.innerHTML = `⏳ 等待 ${PARTNER_NAME} 写下一句...`;
+            storySubmitBtn.disabled = true;
+            storyInput.disabled = true;
+        }
+    }
+
+    function renderStory() {
+        storyList.innerHTML = "";
+        storyCountNum.textContent = storySentences.length;
+
+        if (storySentences.length === 0) {
+            storyList.innerHTML = `
+                <li class="story-line left" style="background: linear-gradient(135deg, #fff9f5, #fffbf7); border-left-color: #e8d5c4;">
+                    <span class="story-avatar">📖</span>
+                    <div class="story-content">
+                        <div class="story-sentence" style="color: #a08060; font-style: italic;">故事尚未开始，写下第一句吧...</div>
+                    </div>
+                </li>
+            `;
+            currentTurn = "A";
+            updateTurnIndicator();
+            return;
+        }
+
+        storySentences.forEach((s, idx) => {
+            const li = document.createElement("li");
+            const isLeft = s.author === "A";
+            li.className = `story-line ${isLeft ? 'left' : 'right'}`;
+            li.id = `story-${s.id}`;
+
+            const avatar = isLeft ? "👧" : "👦";
+            const name = isLeft ? YOUR_NAME : PARTNER_NAME;
+            const timeStr = s.timestamp ? new Date(s.timestamp).toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }) : "";
+
+            const likes = s.likes || {};
+            const likeCount = Object.keys(likes).length;
+            const iLiked = likes[MY_ID] === true;
+
+            li.innerHTML = `
+                <span class="story-avatar">${avatar}</span>
+                <div class="story-content">
+                    <div class="story-sentence">${escapeHtml(s.text)}</div>
+                    <div class="story-meta">
+                        <span class="story-time">${timeStr}</span>
+                        <button class="like-btn ${iLiked ? 'liked' : ''}" data-id="${s.id}">
+                            ${iLiked ? '❤️' : '🤍'} ${likeCount > 0 ? likeCount : ''}
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            const likeBtn = li.querySelector(".like-btn");
+            likeBtn.addEventListener("click", (e) => {
+                e.stopPropagation();
+                const storyId = e.currentTarget.getAttribute("data-id");
+                const likeRef = storyRef.child(storyId).child("likes").child(MY_ID);
+                if (iLiked) {
+                    likeRef.remove();
+                } else {
+                    likeRef.set(true);
+                }
+            });
+
+            storyList.appendChild(li);
+        });
+
+        const lastAuthor = storySentences[storySentences.length - 1].author;
+        currentTurn = lastAuthor === "A" ? "B" : "A";
+        updateTurnIndicator();
+
+        storyList.scrollTop = storyList.scrollHeight;
+
+        if (storySentences.length === 100) {
+            generatePoster();
+        }
+    }
+
+    storyRef.orderByChild("timestamp").on("value", (snap) => {
+        storySentences = [];
+        snap.forEach((child) => {
+            storySentences.push({ id: child.key, ...child.val() });
+        });
+        renderStory();
+    });
+
+    function submitStory() {
+        const text = storyInput.value.trim();
+        if (!text) return;
+        if (currentTurn !== MY_ID) {
+            alert("还没轮到你哦～等TA写完吧 💕");
+            return;
+        }
+
+        storyRef.push({
+            text: text,
+            author: MY_ID,
+            timestamp: firebase.database.ServerValue.TIMESTAMP,
+            likes: {}
+        });
+
+        storyInput.value = "";
+        storyInput.focus();
+    }
+
+    storySubmitBtn.addEventListener("click", submitStory);
+    storyInput.addEventListener("keypress", (e) => {
+        if (e.key === "Enter" && !e.shiftKey) {
+            e.preventDefault();
+            submitStory();
+        }
+    });
+
+    storyInput.addEventListener("input", function() {
+        this.style.height = "auto";
+        this.style.height = Math.min(this.scrollHeight, 120) + "px";
+    });
+
+    // ========== 音效功能 ==========
+    function playSound(type) {
+        if (audioContext) {
+            audioContext.close();
+            audioContext = null;
+        }
+
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const gainNode = audioContext.createGain();
+        gainNode.gain.value = 0.3;
+        gainNode.connect(audioContext.destination);
+
+        if (type === "rain") {
+            playRain(audioContext, gainNode);
+        } else if (type === "fire") {
+            playFire(audioContext, gainNode);
+        }
+        currentSound = type;
+    }
+
+    function playRain(ctx, gain) {
+        const bufferSize = 2 * ctx.sampleRate;
+        const noiseBuffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+        const output = noiseBuffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) {
+            output[i] = Math.random() * 2 - 1;
+        }
+
+        const whiteNoise = ctx.createBufferSource();
+        whiteNoise.buffer = noiseBuffer;
+        whiteNoise.loop = true;
+
+        const filter = ctx.createBiquadFilter();
+        filter.type = "lowpass";
+        filter.frequency.value = 400;
+
+        whiteNoise.connect(filter);
+        filter.connect(gain);
+        whiteNoise.start();
+    }
+
+    function playFire(ctx, gain) {
+        const bufferSize = 2 * ctx.sampleRate;
+        const noiseBuffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+        const output = noiseBuffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) {
+            output[i] = (Math.random() * 2 - 1) * (0.5 + 0.5 * Math.sin(i / 1000));
+        }
+
+        const noise = ctx.createBufferSource();
+        noise.buffer = noiseBuffer;
+        noise.loop = true;
+
+        const filter = ctx.createBiquadFilter();
+        filter.type = "lowpass";
+        filter.frequency.value = 600;
+
+        noise.connect(filter);
+        filter.connect(gain);
+        noise.start();
+    }
+
+    function stopSound() {
+        if (audioContext) {
+            audioContext.close();
+            audioContext = null;
+        }
+        currentSound = null;
+        document.querySelectorAll(".sound-btn").forEach(btn => btn.classList.remove("active"));
+    }
+
+    document.getElementById("rainBtn").addEventListener("click", function() {
+        stopSound();
+        playSound("rain");
+        this.classList.add("active");
+    });
+
+    document.getElementById("fireBtn").addEventListener("click", function() {
+        stopSound();
+        playSound("fire");
+        this.classList.add("active");
+    });
+
+    document.getElementById("stopSoundBtn").addEventListener("click", stopSound);
+
+    // ========== 爱心海报生成 ==========
+    function generatePoster() {
+        const modal = document.getElementById("posterModal");
+        const canvas = document.getElementById("posterCanvas");
+        const ctx = canvas.getContext("2d");
+
+        ctx.fillStyle = "#fef9f3";
+        ctx.fillRect(0, 0, 400, 500);
+
+        ctx.fillStyle = "#f2a7b3";
+        ctx.font = "bold 24px 'PingFang SC', sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillText("💕 我们的故事书 💕", 200, 40);
+
+        ctx.fillStyle = "#a08060";
+        ctx.font = "12px 'PingFang SC', sans-serif";
+        ctx.fillText(`共 ${storySentences.length} 句 · ${YOUR_NAME} & ${PARTNER_NAME}`, 200, 65);
+
+        const heartPoints = [];
+        for (let t = 0; t < Math.PI * 2; t += 0.15) {
+            const x = 16 * Math.pow(Math.sin(t), 3);
+            const y = 13 * Math.cos(t) - 5 * Math.cos(2*t) - 2 * Math.cos(3*t) - Math.cos(4*t);
+            heartPoints.push({ x: x * 8 + 200, y: -y * 8 + 280 });
+        }
+
+        ctx.strokeStyle = "rgba(242, 167, 179, 0.3)";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        heartPoints.forEach((p, i) => {
+            if (i === 0) ctx.moveTo(p.x, p.y);
+            else ctx.lineTo(p.x, p.y);
+        });
+        ctx.closePath();
+        ctx.stroke();
+
+        ctx.font = "11px 'PingFang SC', sans-serif";
+        ctx.fillStyle = "#8b5a2b";
+        ctx.textAlign = "center";
+
+        storySentences.slice(0, 50).forEach((s, i) => {
+            const angle = (i / 50) * Math.PI * 2;
+            const radius = 100 + (i % 3) * 30;
+            const x = 200 + Math.cos(angle) * radius;
+            const y = 280 + Math.sin(angle) * radius;
+
+            const text = s.text.length > 15 ? s.text.substring(0, 15) + "..." : s.text;
+            ctx.fillStyle = s.author === "A" ? "#d46b7a" : "#6b7ad4";
+            ctx.fillText(text, x, y);
+        });
+
+        ctx.fillStyle = "#cfaeb6";
+        ctx.font = "11px 'PingFang SC', sans-serif";
+        ctx.fillText(new Date().toLocaleDateString('zh-CN'), 200, 480);
+
+        modal.classList.add("show");
+    }
+
+    document.getElementById("posterCloseBtn").addEventListener("click", () => {
+        document.getElementById("posterModal").classList.remove("show");
+    });
+
+    // ========== 爱心飘落 ==========
+    function createHeart(x, y) {
+        const heart = document.createElement("div");
+        heart.innerText = ["💕", "💖", "💗", "🌸", "🩷", "✨"][Math.floor(Math.random() * 6)];
+        heart.style.position = "fixed";
+        heart.style.left = x + "px";
+        heart.style.top = y + "px";
+        heart.style.fontSize = "28px";
+        heart.style.pointerEvents = "none";
+        heart.style.zIndex = "9999";
+        heart.style.opacity = "0.8";
+        heart.style.transition = "all 3s ease-out";
+        document.body.appendChild(heart);
+        requestAnimationFrame(() => {
+            heart.style.transform = "translateY(-300px) translateX(20px) rotate(15deg)";
+            heart.style.opacity = "0";
+        });
+        setTimeout(() => heart.remove(), 3000);
+    }
+    document.body.addEventListener("click", (e) => {
+        createHeart(e.clientX, e.clientY);
+    });
+    document.body.addEventListener("touchstart", (e) => {
+        if (e.touches.length) createHeart(e.touches[0].clientX, e.touches[0].clientY);
+    });
+</script>
+</body>
+</html>

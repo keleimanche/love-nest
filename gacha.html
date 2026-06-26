@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>🎰 恋爱扭蛋机 - 恋爱小窝</title>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body {
+            font-family: 'PingFang SC', 'Microsoft YaHei', -apple-system, sans-serif;
+            background: linear-gradient(145deg, #fff5f7 0%, #fef0f5 100%);
+            background-attachment: fixed;
+            color: #4a3538;
+            min-height: 100vh;
+            padding: 20px 16px 80px;
+        }
+        .container { max-width: 480px; margin: 0 auto; }
+        
+        .page-header {
+            text-align: center;
+            background: rgba(255, 255, 255, 0.97);
+            border-radius: 32px;
+            padding: 24px 16px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 24px rgba(242, 167, 179, 0.12);
+        }
+        .page-icon { font-size: 48px; margin-bottom: 8px; }
+        .page-title { font-size: 22px; font-weight: 700; color: #d46b7a; }
+        .page-subtitle { font-size: 12px; color: #b4868f; margin-top: 4px; }
+        
+        .intimacy-bar {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 16px;
+            margin-bottom: 16px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+        }
+        .intimacy-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .intimacy-label { font-size: 14px; font-weight: 600; }
+        .intimacy-value { font-size: 18px; font-weight: 700; color: #f2a7b3; }
+        .intimacy-progress {
+            height: 10px;
+            background: #f5e0e5;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        .intimacy-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #f2a7b3, #e88798);
+            border-radius: 10px;
+            transition: width 0.5s ease;
+        }
+        .intimacy-hint {
+            font-size: 11px;
+            color: #b4868f;
+            margin-top: 8px;
+            text-align: center;
+        }
+        
+        .gacha-machine {
+            background: linear-gradient(145deg, #fff, #fef5f7);
+            border-radius: 32px;
+            padding: 30px 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 12px 32px rgba(242, 167, 179, 0.2), inset 0 2px 4px rgba(255, 255, 255, 0.8);
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        .machine-top {
+            font-size: 64px;
+            margin-bottom: 16px;
+            animation: bounce 2s ease-in-out infinite;
+        }
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            25% { transform: translateY(-8px) rotate(-3deg); }
+            75% { transform: translateY(-8px) rotate(3deg); }
+        }
+        .machine-body {
+            background: linear-gradient(135deg, #fce4e8, #f8d0d8);
+            border-radius: 24px;
+            padding: 24px 16px;
+            margin-bottom: 16px;
+            min-height: 120px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 3px solid #f2a7b3;
+        }
+        .task-text {
+            font-size: 16px;
+            font-weight: 500;
+            line-height: 1.6;
+            color: #5d3a40;
+        }
+        .task-empty {
+            font-size: 14px;
+            color: #b4868f;
+        }
+        
+        .gacha-btn {
+            background: linear-gradient(135deg, #f2a7b3, #e88798);
+            color: white;
+            font-size: 18px;
+            font-weight: 700;
+            padding: 16px 48px;
+            border-radius: 50px;
+            border: none;
+            cursor: pointer;
+            font-family: inherit;
+            box-shadow: 0 8px 24px rgba(232, 135, 152, 0.4);
+            transition: 0.2s;
+        }
+        .gacha-btn:hover { transform: translateY(-2px); box-shadow: 0 12px 32px rgba(232, 135, 152, 0.5); }
+        .gacha-btn:active { transform: scale(0.95); }
+        .gacha-btn:disabled {
+            background: #ccc;
+            box-shadow: none;
+            cursor: not-allowed;
+        }
+        
+        .cooldown-hint {
+            font-size: 13px;
+            color: #b4868f;
+            margin-top: 12px;
+        }
+        
+        .task-actions {
+            display: none;
+            gap: 10px;
+            margin-top: 16px;
+        }
+        .task-actions.show { display: flex; }
+        .task-btn {
+            flex: 1;
+            padding: 12px;
+            border-radius: 20px;
+            border: none;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: inherit;
+            transition: 0.2s;
+        }
+        .task-btn.complete {
+            background: #d4edda;
+            color: #155724;
+        }
+        .task-btn.skip {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .history-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 24px;
+            padding: 20px 16px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+        }
+        .history-title {
+            font-size: 15px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .history-list {
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .history-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 12px;
+            background: #fff9fb;
+            border-radius: 12px;
+            margin-bottom: 8px;
+            font-size: 13px;
+        }
+        .history-task { flex: 1; margin-right: 10px; }
+        .history-status { font-size: 18px; }
+        .history-empty {
+            text-align: center;
+            color: #b4868f;
+            padding: 20px;
+            font-size: 13px;
+        }
+        
+        .skin-selector {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 24px;
+            padding: 20px 16px;
+            margin-top: 16px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+        }
+        .skin-title {
+            font-size: 15px;
+            font-weight: 700;
+            margin-bottom: 12px;
+        }
+        .skin-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+        }
+        .skin-item {
+            aspect-ratio: 1;
+            background: #fdeef1;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            cursor: pointer;
+            transition: 0.2s;
+            border: 2px solid transparent;
+        }
+        .skin-item.selected { border-color: #f2a7b3; background: #fff0f5; }
+        .skin-item.locked { opacity: 0.4; cursor: not-allowed; }
+        .skin-item:not(.locked):hover { transform: scale(1.05); }
+        
+        .nav-bar {
+            position: fixed; bottom: 0; left: 0; right: 0;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            display: flex;
+            justify-content: space-around;
+            padding: 10px 0 max(10px, env(safe-area-inset-bottom));
+            box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.06);
+            z-index: 100;
+        }
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            text-decoration: none;
+            color: #c4939d;
+            font-size: 11px;
+        }
+        .nav-item.active { color: #f2a7b3; }
+        .nav-icon { font-size: 22px; }
+        
+        .gacha-animation {
+            animation: shake 0.5s ease-in-out;
+        }
+        @keyframes shake {
+            0%, 100% { transform: rotate(0deg); }
+            20% { transform: rotate(-10deg); }
+            40% { transform: rotate(10deg); }
+            60% { transform: rotate(-5deg); }
+            80% { transform: rotate(5deg); }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="page-header">
+        <div class="page-icon">🎰</div>
+        <div class="page-title">恋爱扭蛋机</div>
+        <div class="page-subtitle">每天扭一次 · 完成任务攒亲密度</div>
+    </div>
+
+    <div class="intimacy-bar">
+        <div class="intimacy-header">
+            <span class="intimacy-label">💕 亲密度</span>
+            <span class="intimacy-value" id="intimacyValue">0</span>
+        </div>
+        <div class="intimacy-progress">
+            <div class="intimacy-fill" id="intimacyFill" style="width: 0%"></div>
+        </div>
+        <div class="intimacy-hint" id="intimacyHint">再获得 100 点解锁新皮肤</div>
+    </div>
+
+    <div class="gacha-machine" id="gachaMachine">
+        <div class="machine-top" id="machineIcon">🎀</div>
+        <div class="machine-body">
+            <div class="task-empty" id="taskDisplay">转动扭蛋机，抽取今日小任务~</div>
+        </div>
+        <button class="gacha-btn" id="gachaBtn">🎲 扭一个</button>
+        <div class="cooldown-hint" id="cooldownHint"></div>
+        <div class="task-actions" id="taskActions">
+            <button class="task-btn complete" id="completeBtn">✅ 完成打卡</button>
+            <button class="task-btn skip" id="skipBtn">⏭️ 跳过</button>
+        </div>
+    </div>
+
+    <div class="history-card">
+        <div class="history-title">📋 任务记录</div>
+        <div class="history-list" id="historyList">
+            <div class="history-empty">还没有任务记录~</div>
+        </div>
+    </div>
+
+    <div class="skin-selector">
+        <div class="skin-title">🎨 扭蛋机皮肤（亲密度解锁）</div>
+        <div class="skin-grid" id="skinGrid"></div>
+    </div>
+</div>
+
+<div class="nav-bar">
+    <a href="index.html" class="nav-item"><span class="nav-icon">🏠</span>主页</a>
+    <a href="diary.html" class="nav-item"><span class="nav-icon">📝</span>碎碎念</a>
+    <a href="games.html" class="nav-item"><span class="nav-icon">🎮</span>游戏</a>
+    <a href="settings.html" class="nav-item"><span class="nav-icon">⚙️</span>设置</a>
+</div>
+
+<script src="common.js"></script>
+<script>
+    initFirebase();
+    setupHeartEffect();
+
+    const TASKS = [
+        { text: "给对方点一杯TA喜欢的奶茶 🧋", points: 15 },
+        { text: "分享一首你现在正在听的歌 🎵", points: 10 },
+        { text: "一起看一场日落直播 🌅", points: 20 },
+        { text: "发一张你的自拍给TA 📸", points: 10 },
+        { text: "回忆一次你们最甜蜜的瞬间 💕", points: 15 },
+        { text: "说一句藏了很久的悄悄话 🤫", points: 10 },
+        { text: "一起听一首情歌并跟着唱 🎤", points: 15 },
+        { text: "给对方讲一个笑话逗TA开心 😄", points: 10 },
+        { text: "发一条语音消息说晚安 🌙", points: 10 },
+        { text: "计划一次未来的约会行程 🗓️", points: 20 },
+        { text: "分享你的童年趣事 👶", points: 10 },
+        { text: "一起玩一个小游戏 🎮", points: 15 },
+        { text: "给对方起一个新的昵称 🏷️", points: 10 },
+        { text: "发一个拥抱表情包 🤗", points: 5 },
+        { text: "说出对方三个优点 ✨", points: 15 },
+        { text: "一起看一部短片/视频 📺", points: 10 },
+        { text: "分享你今天的开心事 😊", points: 10 },
+        { text: "问对方一个真心话问题 💭", points: 10 },
+        { text: "写一段话表达你的想念 💌", points: 15 },
+        { text: "发一张你的美食给TA看 🍜", points: 5 }
+    ];
+
+    const SKINS = [
+        { icon: "🎀", name: "甜美", unlock: 0 },
+        { icon: "🌸", name: "樱花", unlock: 50 },
+        { icon: "💝", name: "爱心", unlock: 100 },
+        { icon: "⭐", name: "星光", unlock: 150 },
+        { icon: "🌈", name: "彩虹", unlock: 200 },
+        { icon: "🦋", name: "蝴蝶", unlock: 300 },
+        { icon: "💎", name: "钻石", unlock: 500 },
+        { icon: "👑", name: "皇冠", unlock: 800 }
+    ];
+
+    const db = getDb();
+    const gachaRef = db.ref('gacha');
+
+    let gachaData = {
+        intimacy: 0,
+        currentTask: null,
+        lastGachaTime: 0,
+        history: [],
+        currentSkin: 0
+    };
+
+    const gachaBtn = document.getElementById('gachaBtn');
+    const taskDisplay = document.getElementById('taskDisplay');
+    const taskActions = document.getElementById('taskActions');
+    const cooldownHint = document.getElementById('cooldownHint');
+    const machineIcon = document.getElementById('machineIcon');
+    const intimacyValue = document.getElementById('intimacyValue');
+    const intimacyFill = document.getElementById('intimacyFill');
+    const intimacyHint = document.getElementById('intimacyHint');
+    const historyList = document.getElementById('historyList');
+    const skinGrid = document.getElementById('skinGrid');
+
+    function render() {
+        intimacyValue.textContent = gachaData.intimacy;
+        intimacyFill.style.width = Math.min(gachaData.intimacy, 100) + '%';
+        
+        const nextSkin = SKINS.find(s => s.unlock > gachaData.intimacy);
+        if (nextSkin) {
+            intimacyHint.textContent = `再获得 ${nextSkin.unlock - gachaData.intimacy} 点解锁「${nextSkin.name}」皮肤`;
+        } else {
+            intimacyHint.textContent = '🎉 已解锁所有皮肤！';
+        }
+
+        machineIcon.textContent = SKINS[gachaData.currentSkin]?.icon || '🎀';
+
+        renderHistory();
+        renderSkins();
+        checkCooldown();
+    }
+
+    function renderHistory() {
+        if (!gachaData.history || gachaData.history.length === 0) {
+            historyList.innerHTML = '<div class="history-empty">还没有任务记录~</div>';
+            return;
+        }
+        historyList.innerHTML = '';
+        gachaData.history.slice(-10).reverse().forEach(item => {
+            const div = document.createElement('div');
+            div.className = 'history-item';
+            div.innerHTML = `
+                <span class="history-task">${item.text}</span>
+                <span class="history-status">${item.completed ? '✅' : '⏭️'}</span>
+            `;
+            historyList.appendChild(div);
+        });
+    }
+
+    function renderSkins() {
+        skinGrid.innerHTML = '';
+        SKINS.forEach((skin, idx) => {
+            const div = document.createElement('div');
+            div.className = 'skin-item';
+            if (gachaData.intimacy >= skin.unlock) {
+                div.textContent = skin.icon;
+                if (idx === gachaData.currentSkin) div.classList.add('selected');
+                div.onclick = () => {
+                    gachaData.currentSkin = idx;
+                    saveData();
+                };
+            } else {
+                div.textContent = '🔒';
+                div.classList.add('locked');
+                div.title = `需要 ${skin.unlock} 亲密度`;
+            }
+            skinGrid.appendChild(div);
+        });
+    }
+
+    function checkCooldown() {
+        const now = Date.now();
+        const lastTime = gachaData.lastGachaTime || 0;
+        const oneDay = 24 * 60 * 60 * 1000;
+        const elapsed = now - lastTime;
+
+        if (gachaData.currentTask) {
+            taskDisplay.className = 'task-text';
+            taskDisplay.textContent = gachaData.currentTask.text;
+            taskActions.classList.add('show');
+            gachaBtn.disabled = true;
+            cooldownHint.textContent = '完成任务后才能扭下一个哦~';
+            return;
+        }
+
+        if (elapsed < oneDay && lastTime > 0) {
+            const remain = oneDay - elapsed;
+            const hours = Math.floor(remain / (60 * 60 * 1000));
+            const minutes = Math.floor((remain % (60 * 60 * 1000)) / (60 * 1000));
+            cooldownHint.textContent = `⏰ 还需要等待 ${hours}小时${minutes}分钟`;
+            gachaBtn.disabled = true;
+        } else {
+            cooldownHint.textContent = '💡 今日扭蛋机会已就绪！';
+            gachaBtn.disabled = false;
+        }
+
+        taskDisplay.className = 'task-empty';
+        taskDisplay.textContent = '转动扭蛋机，抽取今日小任务~';
+        taskActions.classList.remove('show');
+    }
+
+    function saveData() {
+        gachaRef.set(gachaData);
+        render();
+    }
+
+    function loadData() {
+        gachaRef.on('value', (snap) => {
+            const data = snap.val();
+            if (data) {
+                gachaData = {
+                    intimacy: data.intimacy || 0,
+                    currentTask: data.currentTask || null,
+                    lastGachaTime: data.lastGachaTime || 0,
+                    history: data.history || [],
+                    currentSkin: data.currentSkin || 0
+                };
+            }
+            render();
+        });
+    }
+
+    function doGacha() {
+        const task = TASKS[Math.floor(Math.random() * TASKS.length)];
+        gachaData.currentTask = task;
+        gachaData.lastGachaTime = Date.now();
+        
+        document.getElementById('gachaMachine').classList.add('gacha-animation');
+        setTimeout(() => {
+            document.getElementById('gachaMachine').classList.remove('gacha-animation');
+        }, 500);
+
+        saveData();
+    }
+
+    function completeTask() {
+        console.log('✅ 完成打卡按钮被点击');
+        console.log('当前任务:', gachaData.currentTask);
+        
+        if (!gachaData.currentTask) {
+            alert('请先扭蛋获取任务');
+            return;
+        }
+        
+        const points = gachaData.currentTask.points;
+        gachaData.intimacy += points;
+        gachaData.history.push({
+            text: gachaData.currentTask.text,
+            completed: true,
+            time: Date.now()
+        });
+        gachaData.currentTask = null;
+        
+        alert(`🎉 太棒了！获得 ${points} 亲密度！`);
+        saveData();
+    }
+
+    function skipTask() {
+        console.log('⏭️ 跳过按钮被点击');
+        console.log('当前任务:', gachaData.currentTask);
+        
+        if (!gachaData.currentTask) {
+            alert('请先扭蛋获取任务');
+            return;
+        }
+        
+        if (!confirm('确定跳过这个任务吗？')) return;
+        
+        gachaData.history.push({
+            text: gachaData.currentTask.text,
+            completed: false,
+            time: Date.now()
+        });
+        gachaData.currentTask = null;
+        
+        saveData();
+    }
+
+    gachaBtn.onclick = doGacha;
+    document.getElementById('completeBtn').onclick = completeTask;
+    document.getElementById('skipBtn').onclick = skipTask;
+
+    loadData();
+</script>
+</body>
+</html>

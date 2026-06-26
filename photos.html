@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>📸 照片墙 - 恋爱小窝</title>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body {
+            font-family: 'PingFang SC', 'Microsoft YaHei', -apple-system, sans-serif;
+            background: linear-gradient(145deg, #fff5f7 0%, #fef0f5 100%);
+            background-attachment: fixed;
+            color: #4a3538;
+            min-height: 100vh;
+            padding: 20px 16px 80px;
+        }
+        .container { max-width: 480px; margin: 0 auto; }
+        
+        .page-header {
+            text-align: center;
+            background: rgba(255, 255, 255, 0.97);
+            border-radius: 32px;
+            padding: 24px 16px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 24px rgba(242, 167, 179, 0.12);
+        }
+        .page-icon { font-size: 48px; margin-bottom: 8px; }
+        .page-title { font-size: 22px; font-weight: 700; color: #d46b7a; }
+        .page-subtitle { font-size: 12px; color: #b4868f; margin-top: 4px; }
+        
+        .upload-btn {
+            width: 100%;
+            background: linear-gradient(135deg, #f2a7b3, #e88798);
+            color: white;
+            font-size: 16px;
+            font-weight: 600;
+            padding: 14px;
+            border-radius: 24px;
+            border: none;
+            cursor: pointer;
+            font-family: inherit;
+            margin-bottom: 20px;
+            box-shadow: 0 6px 20px rgba(232, 135, 152, 0.3);
+            transition: 0.2s;
+        }
+        .upload-btn:hover { transform: translateY(-2px); }
+        
+        .photo-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 14px;
+        }
+        .photo-item {
+            aspect-ratio: 1;
+            background: #fdeef1;
+            border-radius: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+            cursor: pointer;
+            transition: 0.2s;
+            overflow: hidden;
+            position: relative;
+        }
+        .photo-item img { width: 100%; height: 100%; object-fit: cover; }
+        .photo-item:hover { transform: scale(1.02); box-shadow: 0 8px 24px rgba(0,0,0,0.1); }
+        .photo-delete {
+            position: absolute; top: 8px; right: 8px;
+            background: rgba(255, 80, 80, 0.9);
+            padding: 6px 10px; border-radius: 50%;
+            font-size: 14px; color: white;
+            opacity: 0; transition: 0.2s; cursor: pointer;
+            border: none;
+        }
+        .photo-item:hover .photo-delete { opacity: 1; }
+        
+        .empty-grid {
+            text-align: center;
+            padding: 60px 20px;
+            color: #b4868f;
+        }
+        
+        .hint-text { text-align: center; font-size: 12px; color: #b4868f; margin-top: 16px; }
+        
+        .modal {
+            display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.9); z-index: 9999;
+            align-items: center; justify-content: center; padding: 20px;
+        }
+        .modal.show { display: flex; }
+        .modal-content {
+            background: white; border-radius: 24px; padding: 24px;
+            max-width: 400px; width: 100%;
+        }
+        .modal-title { font-size: 16px; font-weight: 700; margin-bottom: 16px; text-align: center; }
+        .modal-input {
+            width: 100%; padding: 12px; border: 1.5px solid #f0ced5;
+            border-radius: 16px; font-size: 14px; margin-bottom: 12px;
+            font-family: inherit;
+        }
+        .modal-hint { font-size: 12px; color: #b4868f; margin-bottom: 12px; text-align: center; }
+        .modal-btns { display: flex; gap: 10px; justify-content: center; }
+        .modal-btn {
+            padding: 10px 24px; border-radius: 20px; border: none;
+            cursor: pointer; font-size: 14px; font-family: inherit;
+        }
+        .modal-btn.primary { background: #f2a7b3; color: white; }
+        .modal-btn.secondary { background: #f0f0f0; color: #666; }
+        
+        .preview-img {
+            width: 100%;
+            max-height: 200px;
+            object-fit: contain;
+            border-radius: 12px;
+            margin-bottom: 12px;
+            display: none;
+        }
+        
+        .nav-bar {
+            position: fixed; bottom: 0; left: 0; right: 0;
+            background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px);
+            display: flex; justify-content: space-around; padding: 10px 0 max(10px, env(safe-area-inset-bottom));
+            box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.06); z-index: 100;
+        }
+        .nav-item {
+            display: flex; flex-direction: column; align-items: center; gap: 4px;
+            text-decoration: none; color: #c4939d; font-size: 11px;
+        }
+        .nav-item.active { color: #f2a7b3; }
+        .nav-icon { font-size: 22px; }
+        
+        input[type="file"] { display: none; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="page-header">
+        <div class="page-icon">📸</div>
+        <div class="page-title">我们的回忆墙</div>
+        <div class="page-subtitle">记录甜蜜瞬间 · 云端同步</div>
+    </div>
+
+    <button class="upload-btn" id="uploadBtn">📷 添加照片</button>
+    <input type="file" id="fileInput" accept="image/*">
+
+    <div class="photo-grid" id="photoGrid">
+        <div class="empty-grid">
+            <div style="font-size: 48px; margin-bottom: 10px;">📷</div>
+            <div>还没有照片哦</div>
+            <div style="font-size: 12px; margin-top: 5px;">点击上方按钮添加第一张照片吧</div>
+        </div>
+    </div>
+    <div class="hint-text">💡 点击照片可查看大图，点击 × 可删除</div>
+</div>
+
+<div class="modal" id="viewModal">
+    <div class="modal-content">
+        <div class="modal-title">📸 查看照片</div>
+        <img class="preview-img" id="viewImg" style="display: block;">
+        <div class="modal-btns">
+            <button class="modal-btn secondary" id="closeViewBtn">关闭</button>
+        </div>
+    </div>
+</div>
+
+<div class="modal" id="urlModal">
+    <div class="modal-content">
+        <div class="modal-title">🔗 从URL添加</div>
+        <div class="modal-hint">也可以直接输入图片链接</div>
+        <input type="text" class="modal-input" id="urlInput" placeholder="https://example.com/photo.jpg">
+        <div class="modal-btns">
+            <button class="modal-btn secondary" id="cancelUrlBtn">取消</button>
+            <button class="modal-btn primary" id="saveUrlBtn">添加</button>
+        </div>
+    </div>
+</div>
+
+<div class="nav-bar">
+    <a href="index.html" class="nav-item"><span class="nav-icon">🏠</span>主页</a>
+    <a href="diary.html" class="nav-item"><span class="nav-icon">📝</span>碎碎念</a>
+    <a href="story.html" class="nav-item"><span class="nav-icon">📖</span>故事</a>
+    <a href="settings.html" class="nav-item"><span class="nav-icon">⚙️</span>设置</a>
+</div>
+
+<script src="common.js"></script>
+<script>
+    initFirebase();
+    setupHeartEffect();
+
+    const database = getDb();
+    const photosRef = database.ref('photos');
+    const photoGrid = document.getElementById('photoGrid');
+    const uploadBtn = document.getElementById('uploadBtn');
+    const fileInput = document.getElementById('fileInput');
+    const viewModal = document.getElementById('viewModal');
+    const viewImg = document.getElementById('viewImg');
+    const urlModal = document.getElementById('urlModal');
+    const urlInput = document.getElementById('urlInput');
+
+    let photos = [];
+
+    function render() {
+        if (photos.length === 0) {
+            photoGrid.innerHTML = `
+                <div class="empty-grid" style="grid-column: span 2;">
+                    <div style="font-size: 48px; margin-bottom: 10px;">📷</div>
+                    <div>还没有照片哦</div>
+                    <div style="font-size: 12px; margin-top: 5px;">点击上方按钮添加第一张照片吧</div>
+                </div>
+            `;
+            return;
+        }
+
+        photoGrid.innerHTML = photos.map((p, i) => `
+            <div class="photo-item" onclick="viewPhoto(${i})">
+                <img src="${p.url}" onerror="this.parentElement.innerHTML='<span>📷</span>'">
+                <button class="photo-delete" onclick="deletePhoto(event, ${i})">×</button>
+            </div>
+        `).join('');
+    }
+
+    window.viewPhoto = function(index) {
+        viewImg.src = photos[index].url;
+        viewModal.classList.add('show');
+    };
+
+    window.deletePhoto = function(e, index) {
+        e.stopPropagation();
+        if (confirm('确定删除这张照片吗？')) {
+            photos.splice(index, 1);
+            photosRef.set(photos);
+        }
+    };
+
+    uploadBtn.onclick = () => {
+        const choice = confirm('选择上传方式：\n\n确定 = 从手机/电脑选择照片\n取消 = 输入图片URL链接');
+        if (choice) {
+            fileInput.click();
+        } else {
+            urlModal.classList.add('show');
+            urlInput.focus();
+        }
+    };
+
+    fileInput.onchange = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        if (file.size > 2 * 1024 * 1024) {
+            alert('图片太大了，请选择小于2MB的图片');
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            photos.push({
+                url: event.target.result,
+                timestamp: Date.now()
+            });
+            photosRef.set(photos);
+            alert('✅ 照片上传成功！');
+        };
+        reader.readAsDataURL(file);
+        fileInput.value = '';
+    };
+
+    document.getElementById('closeViewBtn').onclick = () => {
+        viewModal.classList.remove('show');
+    };
+
+    document.getElementById('cancelUrlBtn').onclick = () => {
+        urlModal.classList.remove('show');
+    };
+
+    document.getElementById('saveUrlBtn').onclick = () => {
+        const url = urlInput.value.trim();
+        if (!url) {
+            alert('请输入图片URL');
+            return;
+        }
+        photos.push({
+            url: url,
+            timestamp: Date.now()
+        });
+        photosRef.set(photos);
+        urlModal.classList.remove('show');
+        urlInput.value = '';
+        alert('✅ 照片添加成功！');
+    };
+
+    photosRef.on('value', (snap) => {
+        const data = snap.val();
+        if (data && Array.isArray(data)) {
+            photos = data.filter(p => p && p.url);
+        } else {
+            photos = [];
+        }
+        render();
+    });
+
+    render();
+</script>
+</body>
+</html>

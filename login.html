@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>💕 恋爱小窝 - 登录</title>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'PingFang SC', 'Microsoft YaHei', -apple-system, sans-serif;
+            background: linear-gradient(145deg, #fff5f7 0%, #fef0f5 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .login-container {
+            background: rgba(255, 255, 255, 0.97);
+            border-radius: 40px;
+            padding: 50px 40px;
+            width: 100%;
+            max-width: 420px;
+            box-shadow: 0 20px 60px rgba(242, 167, 179, 0.2);
+        }
+        
+        .logo {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        .logo-icon {
+            font-size: 70px;
+            animation: float 3s ease-in-out infinite;
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        .logo-title {
+            font-size: 28px;
+            font-weight: 700;
+            margin-top: 16px;
+            background: linear-gradient(135deg, #d46b7a, #b85c6a);
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+        }
+        .logo-subtitle {
+            font-size: 14px;
+            color: #b4868f;
+            margin-top: 8px;
+        }
+        
+        .tab-switch {
+            display: flex;
+            background: #fef2f5;
+            border-radius: 30px;
+            padding: 4px;
+            margin-bottom: 30px;
+        }
+        .tab-btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            background: transparent;
+            border-radius: 26px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            color: #b4868f;
+            transition: 0.3s;
+            font-family: inherit;
+        }
+        .tab-btn.active {
+            background: white;
+            color: #d46b7a;
+            box-shadow: 0 4px 12px rgba(242, 167, 179, 0.2);
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: #4a3538;
+            margin-bottom: 8px;
+        }
+        .form-input {
+            width: 100%;
+            padding: 14px 18px;
+            border: 2px solid #f0ced5;
+            border-radius: 25px;
+            font-size: 15px;
+            background: #fffafb;
+            transition: 0.2s;
+            font-family: inherit;
+        }
+        .form-input:focus {
+            border-color: #f2a7b3;
+            outline: none;
+            box-shadow: 0 0 0 4px rgba(242, 167, 179, 0.1);
+        }
+        .form-hint {
+            font-size: 11px;
+            color: #b4868f;
+            margin-top: 6px;
+        }
+        
+        .submit-btn {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #f2a7b3, #e88798);
+            border: none;
+            border-radius: 30px;
+            color: white;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.3s;
+            font-family: inherit;
+            box-shadow: 0 8px 20px rgba(232, 135, 152, 0.3);
+        }
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 28px rgba(232, 135, 152, 0.4);
+        }
+        .submit-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .error-msg {
+            background: #fff5f5;
+            border: 1px solid #ffcdd2;
+            color: #d32f2f;
+            padding: 12px 16px;
+            border-radius: 15px;
+            font-size: 13px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        .error-msg.show { display: block; }
+        
+        .success-msg {
+            background: #f0fff0;
+            border: 1px solid #c8e6c9;
+            color: #388e3c;
+            padding: 12px 16px;
+            border-radius: 15px;
+            font-size: 13px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        .success-msg.show { display: block; }
+        
+        .form-panel { display: none; }
+        .form-panel.active { display: block; }
+        
+        .divider {
+            text-align: center;
+            margin: 30px 0;
+            position: relative;
+        }
+        .divider::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: #f0ced5;
+        }
+        .divider-text {
+            background: white;
+            padding: 0 15px;
+            color: #b4868f;
+            font-size: 13px;
+            position: relative;
+        }
+        
+        .couple-hint {
+            background: #fff9f0;
+            border: 1px solid #ffe0b2;
+            border-radius: 15px;
+            padding: 15px;
+            margin-bottom: 20px;
+            font-size: 12px;
+            color: #f57c00;
+            line-height: 1.6;
+        }
+        .couple-hint strong {
+            color: #e65100;
+        }
+    </style>
+</head>
+<body>
+<div class="login-container">
+    <div class="logo">
+        <div class="logo-icon">💕</div>
+        <div class="logo-title">恋爱小窝</div>
+        <div class="logo-subtitle">专属两个人的甜蜜空间</div>
+    </div>
+    
+    <div class="tab-switch">
+        <button class="tab-btn active" id="loginTab">登录</button>
+        <button class="tab-btn" id="registerTab">注册</button>
+    </div>
+    
+    <div class="error-msg" id="errorMsg"></div>
+    <div class="success-msg" id="successMsg"></div>
+    
+    <!-- 登录表单 -->
+    <div class="form-panel active" id="loginPanel">
+        <form id="loginForm">
+            <div class="form-group">
+                <label class="form-label">邮箱</label>
+                <input type="email" class="form-input" id="loginEmail" placeholder="your@email.com" required>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">密码</label>
+                <input type="password" class="form-input" id="loginPassword" placeholder="输入密码" required>
+            </div>
+            
+            <button type="submit" class="submit-btn">登录</button>
+        </form>
+    </div>
+    
+    <!-- 注册表单 -->
+    <div class="form-panel" id="registerPanel">
+        <div class="couple-hint">
+            <strong>💑 情侣绑定说明：</strong><br>
+            1. 第一位注册的用户请选择身份 <strong>A</strong><br>
+            2. 第二位注册的用户请选择身份 <strong>B</strong><br>
+            3. 两人使用相同的 <strong>情侣码</strong> 即可绑定
+        </div>
+        
+        <form id="registerForm">
+            <div class="form-group">
+                <label class="form-label">昵称</label>
+                <input type="text" class="form-input" id="registerName" placeholder="你的昵称" maxlength="20" required>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">邮箱</label>
+                <input type="email" class="form-input" id="registerEmail" placeholder="your@email.com" required>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">密码</label>
+                <input type="password" class="form-input" id="registerPassword" placeholder="至少6位密码" minlength="6" required>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">身份</label>
+                <input type="text" class="form-input" id="registerRole" placeholder="A 或 B" maxlength="1" required>
+                <div class="form-hint">第一人选 A，第二人选 B</div>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">情侣码</label>
+                <input type="text" class="form-input" id="coupleCode" placeholder="自定义一个情侣码" maxlength="20" required>
+                <div class="form-hint">两人使用相同的情侣码即可绑定</div>
+            </div>
+            
+            <button type="submit" class="submit-btn">注册</button>
+        </form>
+    </div>
+</div>
+
+<script>
+const FIREBASE_CONFIG = {
+    apiKey: "AIzaSyALmikJZXqjjqPmqZ3PKeERMsKKrxtgr64",
+    authDomain: "love-nest-1536d.firebaseapp.com",
+    databaseURL: "https://love-nest-1536d-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "love-nest-1536d",
+    storageBucket: "love-nest-1536d.firebasestorage.app",
+    messagingSenderId: "346144764535",
+    appId: "1:346144764535:web:0cc944b724bdfce5a38c72"
+};
+
+firebase.initializeApp(FIREBASE_CONFIG);
+const auth = firebase.auth();
+const db = firebase.database();
+
+const loginTab = document.getElementById('loginTab');
+const registerTab = document.getElementById('registerTab');
+const loginPanel = document.getElementById('loginPanel');
+const registerPanel = document.getElementById('registerPanel');
+const errorMsg = document.getElementById('errorMsg');
+const successMsg = document.getElementById('successMsg');
+
+loginTab.onclick = () => {
+    loginTab.classList.add('active');
+    registerTab.classList.remove('active');
+    loginPanel.classList.add('active');
+    registerPanel.classList.remove('active');
+    hideMessages();
+};
+
+registerTab.onclick = () => {
+    registerTab.classList.add('active');
+    loginTab.classList.remove('active');
+    registerPanel.classList.add('active');
+    loginPanel.classList.remove('active');
+    hideMessages();
+};
+
+function showError(msg) {
+    errorMsg.textContent = msg;
+    errorMsg.classList.add('show');
+    successMsg.classList.remove('show');
+}
+
+function showSuccess(msg) {
+    successMsg.textContent = msg;
+    successMsg.classList.add('show');
+    errorMsg.classList.remove('show');
+}
+
+function hideMessages() {
+    errorMsg.classList.remove('show');
+    successMsg.classList.remove('show');
+}
+
+// 登录
+document.getElementById('loginForm').onsubmit = async (e) => {
+    e.preventDefault();
+    hideMessages();
+    
+    const email = document.getElementById('loginEmail').value.trim();
+    const password = document.getElementById('loginPassword').value;
+    
+    try {
+        const userCredential = await auth.signInWithEmailAndPassword(email, password);
+        const uid = userCredential.user.uid;
+        
+        // 获取用户数据
+        const snapshot = await db.ref('users/' + uid).once('value');
+        const userData = snapshot.val();
+        
+        if (userData) {
+            localStorage.setItem('userData', JSON.stringify(userData));
+            showSuccess('登录成功！正在跳转...');
+            setTimeout(() => {
+                window.location.href = 'index.html';
+            }, 1000);
+        } else {
+            showError('用户数据不存在，请重新注册');
+        }
+    } catch (error) {
+        showError('登录失败: ' + error.message);
+    }
+};
+
+// 注册
+document.getElementById('registerForm').onsubmit = async (e) => {
+    e.preventDefault();
+    hideMessages();
+    
+    const name = document.getElementById('registerName').value.trim();
+    const email = document.getElementById('registerEmail').value.trim();
+    const password = document.getElementById('registerPassword').value;
+    const role = document.getElementById('registerRole').value.trim().toUpperCase();
+    const coupleCode = document.getElementById('coupleCode').value.trim();
+    
+    if (role !== 'A' && role !== 'B') {
+        showError('身份必须是 A 或 B');
+        return;
+    }
+    
+    try {
+        // 创建用户
+        const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+        const uid = userCredential.user.uid;
+        
+        // 保存用户数据
+        const userData = {
+            uid: uid,
+            name: name,
+            email: email,
+            role: role,
+            coupleCode: coupleCode,
+            createdAt: Date.now()
+        };
+        
+        await db.ref('users/' + uid).set(userData);
+        
+        // 更新情侣绑定
+        await db.ref('couples/' + coupleCode + '/' + role).set({
+            uid: uid,
+            name: name,
+            email: email
+        });
+        
+        localStorage.setItem('userData', JSON.stringify(userData));
+        
+        showSuccess('注册成功！正在跳转...');
+        setTimeout(() => {
+            window.location.href = 'index.html';
+        }, 1000);
+        
+    } catch (error) {
+        showError('注册失败: ' + error.message);
+    }
+};
+
+// 检查登录状态
+auth.onAuthStateChanged((user) => {
+    if (user) {
+        window.location.href = 'index.html';
+    }
+});
+</script>
+</body>
+</html>

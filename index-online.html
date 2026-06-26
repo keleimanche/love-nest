@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>💕 我们的恋爱小窝 - 云同步版</title>
+    <style>
+        :root {
+            --pink: #f2a7b3;
+            --pink-light: #fce4e8;
+            --rose: #d4858f;
+            --text: #4a3538;
+            --text-light: #7a5f63;
+            --white: #ffffff;
+            --shadow: 0 4px 20px rgba(180, 120, 130, 0.15);
+            --shadow-hover: 0 8px 30px rgba(180, 120, 130, 0.25);
+            --radius: 20px;
+            --radius-sm: 12px;
+            --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(180deg, #fff5f7 0%, #fef0f3 50%, #fff5f7 100%);
+            background-attachment: fixed;
+            color: var(--text);
+            min-height: 100vh;
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+        #hearts-container {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; z-index: 9999;
+        }
+        .floating-heart {
+            position: absolute; font-size: 24px;
+            animation: floatUp 5s ease-in forwards; opacity: 0;
+        }
+        @keyframes floatUp {
+            0% { transform: translateY(0) scale(0.3); opacity: 0; }
+            15% { opacity: 1; transform: translateY(-30px) scale(1.2); }
+            100% { transform: translateY(-600px) scale(0.2); opacity: 0; }
+        }
+        .main-container {
+            max-width: 680px; margin: 0 auto; padding: 20px 16px 40px;
+            position: relative; z-index: 1;
+        }
+        .hero-card {
+            background: var(--white); border-radius: var(--radius);
+            padding: 36px 24px 28px; text-align: center;
+            box-shadow: var(--shadow); margin-bottom: 20px;
+            position: relative; overflow: hidden;
+        }
+        .hero-icon { font-size: 56px; animation: bounce 2s ease-in-out infinite; }
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-14px); }
+        }
+        .hero-title { font-size: 26px; font-weight: 700; margin: 12px 0 4px; }
+        .hero-subtitle { font-size: 14px; color: var(--text-light); }
+        .timer-section { margin-top: 20px; }
+        .timer-label { font-size: 13px; color: var(--text-light); margin-bottom: 8px; }
+        .timer-grid { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; }
+        .timer-unit {
+            background: var(--pink-light); border-radius: var(--radius-sm);
+            padding: 14px 16px; min-width: 70px; text-align: center;
+        }
+        .timer-unit .number {
+            font-size: 32px; font-weight: 700; color: var(--rose);
+            font-variant-numeric: tabular-nums;
+        }
+        .timer-unit .unit-label { font-size: 11px; color: var(--text-light); margin-top: 2px; }
+        .anniversary-badge {
+            display: inline-block; margin-top: 16px;
+            background: linear-gradient(135deg, #fce4e8, #f8d0d8);
+            color: #b85c6a; padding: 8px 18px; border-radius: 30px;
+            font-size: 13px; font-weight: 600;
+        }
+        .card {
+            background: var(--white); border-radius: var(--radius);
+            padding: 24px 20px; margin-bottom: 20px;
+            box-shadow: var(--shadow); transition: var(--transition);
+        }
+        .card:hover { box-shadow: var(--shadow-hover); transform: translateY(-2px); }
+        .card-header {
+            display: flex; align-items: center; gap: 10px;
+            margin-bottom: 16px; font-size: 18px; font-weight: 700;
+        }
+        .card-header .emoji { font-size: 26px; }
+        .photo-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+        @media (max-width: 480px) { .photo-grid { grid-template-columns: repeat(2, 1fr); } }
+        .photo-item {
+            aspect-ratio: 1 / 1; border-radius: var(--radius-sm);
+            overflow: hidden; cursor: pointer; position: relative;
+            background: var(--pink-light);
+            display: flex; align-items: center; justify-content: center;
+            transition: var(--transition);
+        }
+        .photo-item img { width: 100%; height: 100%; object-fit: cover; }
+        .photo-item:hover { transform: scale(1.04); }
+        .photo-placeholder { font-size: 44px; opacity: 0.7; }
+        .photo-add-hint { text-align: center; font-size: 12px; color: var(--text-light); margin-top: 12px; }
+        .diary-input-area { display: flex; gap: 10px; margin-bottom: 14px; }
+        .diary-input-area input {
+            flex: 1; padding: 12px 16px; border: 2px solid #f0d8dd;
+            border-radius: 30px; font-size: 14px; outline: none;
+            background: #fffbfc; font-family: inherit; color: var(--text);
+        }
+        .diary-input-area input:focus { border-color: var(--pink); }
+        .btn {
+            padding: 11px 22px; border-radius: 30px; border: none;
+            cursor: pointer; font-size: 14px; font-weight: 600;
+            transition: var(--transition); font-family: inherit;
+        }
+        .btn-primary { background: var(--pink); color: #fff; }
+        .btn-primary:hover { background: #e8929f; }
+        .btn-secondary { background: #f0d8dd; color: var(--text); }
+        .btn-small { padding: 6px 14px; font-size: 12px; border-radius: 20px; }
+        .diary-list { list-style: none; max-height: 360px; overflow-y: auto; }
+        .diary-item {
+            display: flex; align-items: flex-start; gap: 10px;
+            padding: 12px 14px; margin-bottom: 8px;
+            background: #fffbfc; border-radius: var(--radius-sm);
+            word-break: break-word;
+        }
+        .diary-item .diary-text { flex: 1; font-size: 14px; line-height: 1.5; }
+        .diary-item .diary-meta { font-size: 11px; color: #c4a8ae; white-space: nowrap; }
+        .diary-item .diary-delete {
+            background: none; border: none; cursor: pointer;
+            font-size: 16px; opacity: 0.4; transition: var(--transition);
+            padding: 2px 6px; color: #c97;
+        }
+        .diary-item .diary-delete:hover { opacity: 1; }
+        .diary-empty { text-align: center; color: #ccb0b6; padding: 30px 10px; font-size: 14px; }
+        .love-box-container { text-align: center; }
+        .love-box-display {
+            background: linear-gradient(135deg, #fef5f7, #fce4e8);
+            border-radius: var(--radius); padding: 28px 20px; min-height: 100px;
+            display: flex; align-items: center; justify-content: center;
+            margin-bottom: 16px;
+        }
+        .quote-text { font-size: 17px; font-weight: 500; line-height: 1.7; color: #5d3a40; }
+        .quote-text.fade-in { animation: fadeInUp 0.5s ease-out; }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+        .btn-love {
+            background: linear-gradient(135deg, #f2a7b3, #e88798);
+            color: #fff; padding: 12px 30px; font-size: 15px;
+            border-radius: 30px; border: none; cursor: pointer;
+            font-weight: 600; box-shadow: 0 4px 16px rgba(232, 135, 152, 0.35);
+        }
+        .btn-love:hover { transform: translateY(-2px); }
+        .sync-status {
+            position: fixed; top: 10px; right: 10px; z-index: 10000;
+            background: var(--white); padding: 8px 14px; border-radius: 20px;
+            font-size: 12px; box-shadow: var(--shadow);
+            display: flex; align-items: center; gap: 6px;
+        }
+        .sync-dot { width: 8px; height: 8px; border-radius: 50%; }
+        .sync-dot.online { background: #4ade80; }
+        .sync-dot.offline { background: #f87171; }
+        .sync-dot.syncing { background: #fbbf24; animation: pulse 1s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        .footer-note { text-align: center; font-size: 12px; color: #ccb0b6; padding: 20px 0 10px; }
+        .footer-note span { color: var(--rose); }
+        .loading-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(255, 250, 247, 0.9); z-index: 99999;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center; gap: 16px;
+        }
+        .loading-spinner {
+            width: 50px; height: 50px; border: 4px solid #fce4e8;
+            border-top-color: var(--pink); border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .loading-text { font-size: 16px; color: var(--text-light); }
+        .setup-form {
+            max-width: 400px; margin: 0 auto; padding: 20px;
+        }
+        .setup-form input, .setup-form textarea {
+            width: 100%; padding: 12px; margin-bottom: 12px;
+            border: 2px solid #f0d8dd; border-radius: 12px;
+            font-size: 14px; font-family: inherit;
+        }
+        .setup-form label {
+            display: block; margin-bottom: 4px; font-weight: 600; font-size: 14px;
+        }
+        .setup-form small { display: block; margin-top: -8px; margin-bottom: 12px; color: var(--text-light); font-size: 12px; }
+    </style>
+</head>
+<body>
+
+    <div id="hearts-container"></div>
+    <div class="sync-status" id="syncStatus">
+        <div class="sync-dot" id="syncDot"></div>
+        <span id="syncText">连接中...</span>
+    </div>
+
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">正在连接云端...</div>
+    </div>
+
+    <div class="main-container" id="mainContent" style="display: none;">
+        <div class="hero-card">
+            <div class="hero-icon">💕</div>
+            <h1 class="hero-title">我们的恋爱小窝</h1>
+            <p class="hero-subtitle" id="heroNames">👦 宝贝 & 乖乖 👧</p>
+            <div class="timer-section">
+                <p class="timer-label">📅 我们已经在一起</p>
+                <div class="timer-grid">
+                    <div class="timer-unit"><div class="number" id="days">0</div><div class="unit-label">天</div></div>
+                    <div class="timer-unit"><div class="number" id="hours">0</div><div class="unit-label">时</div></div>
+                    <div class="timer-unit"><div class="number" id="minutes">0</div><div class="unit-label">分</div></div>
+                    <div class="timer-unit"><div class="number" id="seconds">0</div><div class="unit-label">秒</div></div>
+                </div>
+                <div class="anniversary-badge" id="anniversaryBadge">🎉 距离一周年还有 ? 天</div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header"><span class="emoji">📸</span> 我们的回忆墙</div>
+            <div class="photo-grid" id="photoGrid"></div>
+            <p class="photo-add-hint">💡 点击可以添加/查看照片</p>
+        </div>
+
+        <div class="card">
+            <div class="card-header"><span class="emoji">📝</span> 日常碎碎念 <small style="font-weight:400; color: var(--text-light);">（实时同步）</small></div>
+            <div class="diary-input-area">
+                <input type="text" id="diaryInput" placeholder="今天发生了什么有趣的事？💭" maxlength="200" autocomplete="off" />
+                <button class="btn btn-primary" id="diaryAddBtn">💾 记下</button>
+            </div>
+            <ul class="diary-list" id="diaryList"></ul>
+        </div>
+
+        <div class="card">
+            <div class="card-header"><span class="emoji">💌</span> 情话盲盒</div>
+            <div class="love-box-container">
+                <div class="love-box-display">
+                    <span class="quote-text" id="quoteText">点下面的按钮，拆一句情话吧 💝</span>
+                </div>
+                <button class="btn-love" id="loveBoxBtn">🎁 拆开盲盒</button>
+            </div>
+        </div>
+
+        <div class="footer-note">
+            Made with <span>♥</span> · 数据云端实时同步
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getDatabase, ref, onValue, set, push, remove, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
+
+        const FIREBASE_CONFIG = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_PROJECT.firebaseapp.com",
+            databaseURL: "https://YOUR_PROJECT.firebaseio.com",
+            projectId: "YOUR_PROJECT",
+            storageBucket: "YOUR_PROJECT.appspot.com",
+            messagingSenderId: "YOUR_SENDER_ID",
+            appId: "YOUR_APP_ID"
+        };
+
+        const DEFAULT_DATA = {
+            startDate: "2025-06-01T20:00:00",
+            yourName: "宝贝",
+            partnerName: "乖乖",
+            photos: ["", "", "", "", "", ""],
+            photoEmojis: ["🐣", "🌸", "🍰", "🌙", "🎠", "💖"],
+            loveQuotes: [
+                "遇见你，是我这辈子最美丽的意外。✨",
+                "你是我所有温柔和偏爱的来源。🌙",
+                "想和你一起看遍世间所有的日落。🌅",
+                "你在身边，就是最好的日子。🏡",
+                "谢谢你成为我平凡生活里的光。💡",
+                "和你在一起的每一秒都值得纪念。⏳",
+                "我喜欢你，从一而终，认真且怂。🐻",
+                "世界很大，但我的眼里只有你。👀",
+                "你笑起来的样子，比糖果还甜。🍬",
+                "有你在，每天都是情人节。💐",
+            ]
+        };
+
+        let app, db, dataRef;
+        let currentData = { ...DEFAULT_DATA, diaryEntries: {} };
+        let lastQuoteIndex = -1;
+
+        function initFirebase() {
+            try {
+                app = initializeApp(FIREBASE_CONFIG);
+                db = getDatabase(app);
+                dataRef = ref(db, 'loveSite');
+                
+                onValue(dataRef, (snapshot) => {
+                    const data = snapshot.val();
+                    if (data) {
+                        currentData = { ...DEFAULT_DATA, ...data };
+                        if (!currentData.diaryEntries) currentData.diaryEntries = {};
+                        renderAll();
+                        setSyncStatus('online');
+                        hideLoading();
+                    } else {
+                        initializeData();
+                    }
+                }, (error) => {
+                    console.error('Firebase error:', error);
+                    setSyncStatus('offline');
+                    showError('连接失败，请检查Firebase配置');
+                });
+
+            } catch (e) {
+                console.error('Init error:', e);
+                showError('Firebase初始化失败，请检查配置');
+            }
+        }
+
+        async function initializeData() {
+            await set(dataRef, {
+                ...DEFAULT_DATA,
+                diaryEntries: {},
+                createdAt: serverTimestamp()
+            });
+        }
+
+        function renderAll() {
+            document.getElementById('heroNames').textContent = 
+                `👦 ${currentData.yourName} & ${currentData.partnerName} 👧`;
+            renderPhotoWall();
+            renderDiaryList();
+            updateTimer();
+        }
+
+        function updateTimer() {
+            const startDate = new Date(currentData.startDate);
+            const now = new Date();
+            const diffMs = now - startDate;
+
+            if (diffMs < 0) {
+                document.getElementById('days').textContent = '0';
+                document.getElementById('hours').textContent = '0';
+                document.getElementById('minutes').textContent = '0';
+                document.getElementById('seconds').textContent = '0';
+                return;
+            }
+
+            const totalSeconds = Math.floor(diffMs / 1000);
+            const totalMinutes = Math.floor(totalSeconds / 60);
+            const totalHours = Math.floor(totalMinutes / 60);
+            const totalDays = Math.floor(totalHours / 24);
+
+            document.getElementById('days').textContent = totalDays;
+            document.getElementById('hours').textContent = totalHours % 24;
+            document.getElementById('minutes').textContent = totalMinutes % 60;
+            document.getElementById('seconds').textContent = totalSeconds % 60;
+
+            const oneYearLater = new Date(startDate);
+            oneYearLater.setFullYear(oneYearLater.getFullYear() + 1);
+            const diffToOneYear = oneYearLater - now;
+            const badge = document.getElementById('anniversaryBadge');
+
+            if (diffToOneYear <= 0 && diffToOneYear > -86400000) {
+                badge.textContent = '🎉 今天是我们的一周年纪念日！💖';
+                badge.style.background = 'linear-gradient(135deg, #f2a7b3, #e88798)';
+                badge.style.color = '#fff';
+            } else if (diffToOneYear < 0) {
+                const daysSince = Math.floor(Math.abs(diffToOneYear) / 86400000);
+                badge.textContent = `💝 一周年已过 ${daysSince} 天`;
+            } else {
+                const daysUntil = Math.ceil(diffToOneYear / 86400000);
+                badge.textContent = `🎀 距离一周年还有 ${daysUntil} 天`;
+            }
+        }
+        setInterval(updateTimer, 1000);
+
+        function renderPhotoWall() {
+            const grid = document.getElementById('photoGrid');
+            grid.innerHTML = '';
+            const photos = currentData.photos || [];
+            const emojis = currentData.photoEmojis || DEFAULT_DATA.photoEmojis;
+
+            photos.forEach((url, index) => {
+                const div = document.createElement('div');
+                div.className = 'photo-item';
+                if (url && url.trim()) {
+                    const img = document.createElement('img');
+                    img.src = url.trim();
+                    img.loading = 'lazy';
+                    img.onerror = () => {
+                        div.innerHTML = `<span class="photo-placeholder">${emojis[index] || '🖼️'}</span>`;
+                    };
+                    div.appendChild(img);
+                } else {
+                    div.innerHTML = `<span class="photo-placeholder">${emojis[index] || '🖼️'}</span>`;
+                }
+                div.addEventListener('click', () => {
+                    const newUrl = prompt('请输入照片URL（留空取消）：', url || '');
+                    if (newUrl !== null) {
+                        const newPhotos = [...photos];
+                        newPhotos[index] = newUrl.trim();
+                        set(ref(db, 'loveSite/photos'), newPhotos);
+                        showToast('📸 照片已更新！');
+                    }
+                });
+                grid.appendChild(div);
+            });
+        }
+
+        function renderDiaryList() {
+            const list = document.getElementById('diaryList');
+            const entries = currentData.diaryEntries || {};
+            const sortedEntries = Object.entries(entries)
+                .map(([id, entry]) => ({ id, ...entry }))
+                .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+
+            if (sortedEntries.length === 0) {
+                list.innerHTML = '<li class="diary-empty">📭 还没有记录呢～<br>写下第一条日常吧 💕</li>';
+                return;
+            }
+
+            list.innerHTML = '';
+            sortedEntries.forEach(entry => {
+                const li = document.createElement('li');
+                li.className = 'diary-item';
+                const date = new Date(entry.timestamp || Date.now());
+                const timeStr = date.toLocaleString('zh-CN', { 
+                    month: '2-digit', day: '2-digit', 
+                    hour: '2-digit', minute: '2-digit' 
+                });
+                li.innerHTML = `
+                    <span class="diary-meta">${timeStr}</span>
+                    <span class="diary-text">${escapeHtml(entry.text)}</span>
+                    <button class="diary-delete" data-id="${entry.id}">🗑️</button>
+                `;
+                li.querySelector('.diary-delete').addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    if (confirm('确定删除这条记录吗？')) {
+                        remove(ref(db, `loveSite/diaryEntries/${entry.id}`));
+                        showToast('🗑️ 已删除');
+                    }
+                });
+                list.appendChild(li);
+            });
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        document.getElementById('diaryAddBtn').addEventListener('click', addDiary);
+        document.getElementById('diaryInput').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') addDiary();
+        });
+
+        function addDiary() {
+            const input = document.getElementById('diaryInput');
+            const text = input.value.trim();
+            if (!text) return;
+            if (text.length > 200) {
+                showToast('📝 内容太长，限200字');
+                return;
+            }
+
+            const entriesRef = ref(db, 'loveSite/diaryEntries');
+            push(entriesRef, {
+                text: text,
+                timestamp: Date.now()
+            });
+            
+            input.value = '';
+            showToast('✅ 已同步保存！');
+            spawnHeart(window.innerWidth / 2, window.innerHeight / 2);
+        }
+
+        const loveBoxBtn = document.getElementById('loveBoxBtn');
+        const quoteText = document.getElementById('quoteText');
+        loveBoxBtn.addEventListener('click', () => {
+            const quotes = currentData.loveQuotes || DEFAULT_DATA.loveQuotes;
+            let index;
+            do {
+                index = Math.floor(Math.random() * quotes.length);
+            } while (index === lastQuoteIndex && quotes.length > 1);
+            lastQuoteIndex = index;
+            
+            quoteText.textContent = quotes[index];
+            quoteText.classList.remove('fade-in');
+            void quoteText.offsetWidth;
+            quoteText.classList.add('fade-in');
+            
+            for (let i = 0; i < 6; i++) {
+                setTimeout(() => spawnHeart(
+                    window.innerWidth / 2 + (Math.random() - 0.5) * 200,
+                    window.innerHeight / 2
+                ), i * 80);
+            }
+        });
+
+        function spawnHeart(x, y) {
+            const heart = document.createElement('span');
+            heart.className = 'floating-heart';
+            heart.textContent = ['💕','💖','💗','💝','💘','🌸'][Math.floor(Math.random() * 6)];
+            heart.style.left = x + 'px';
+            heart.style.top = y + 'px';
+            heart.style.fontSize = (20 + Math.random() * 30) + 'px';
+            document.getElementById('hearts-container').appendChild(heart);
+            setTimeout(() => heart.remove(), 5000);
+        }
+        document.addEventListener('click', (e) => spawnHeart(e.clientX, e.clientY));
+
+        function setSyncStatus(status) {
+            const dot = document.getElementById('syncDot');
+            const text = document.getElementById('syncText');
+            dot.className = 'sync-dot ' + status;
+            const labels = { online: '已连接', offline: '离线', syncing: '同步中...' };
+            text.textContent = labels[status] || status;
+        }
+
+        function hideLoading() {
+            document.getElementById('loadingOverlay').style.display = 'none';
+            document.getElementById('mainContent').style.display = 'block';
+        }
+
+        function showError(msg) {
+            const overlay = document.getElementById('loadingOverlay');
+            overlay.innerHTML = `
+                <div style="text-align: center; padding: 20px;">
+                    <div style="font-size: 48px; margin-bottom: 16px;">💔</div>
+                    <div style="font-size: 18px; color: var(--text); margin-bottom: 12px;">${msg}</div>
+                    <div style="font-size: 13px; color: var(--text-light); max-width: 300px;">
+                        请检查 Firebase 配置是否正确填写。<br>
+                        参考 README.md 中的配置说明。
+                    </div>
+                </div>
+            `;
+        }
+
+        function showToast(msg) {
+            let toast = document.getElementById('toast');
+            if (!toast) {
+                toast = document.createElement('div');
+                toast.id = 'toast';
+                toast.style.cssText = `
+                    position: fixed; bottom: 30px; left: 50%;
+                    transform: translateX(-50%); background: #4a3538;
+                    color: #fff; padding: 10px 22px; border-radius: 30px;
+                    font-size: 14px; z-index: 10000; opacity: 0;
+                    transition: opacity 0.3s;
+                `;
+                document.body.appendChild(toast);
+            }
+            toast.textContent = msg;
+            toast.style.opacity = '1';
+            clearTimeout(toast._t);
+            toast._t = setTimeout(() => toast.style.opacity = '0', 2000);
+        }
+
+        initFirebase();
+    </script>
+</body>
+</html>
