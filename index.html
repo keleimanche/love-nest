@@ -138,15 +138,13 @@
 <script>
     initFirebase();
     
-    const user = checkLogin();
-    if (user) {
-        loadSettings((settings) => {
-            document.getElementById('coupleName').innerHTML = `👦 ${settings.yourName} & ${settings.partnerName} 👧`;
-            startTimer(settings.startDate);
-        });
-        setupConnectionStatus();
-        setupHeartEffect();
-    }
+    // 直接加载设置和启动计时器（已禁用登录检查）
+    loadSettings((settings) => {
+        document.getElementById('coupleName').innerHTML = `👦 ${settings.yourName} & ${settings.partnerName} 👧`;
+        startTimer(settings.startDate);
+    });
+    setupConnectionStatus();
+    setupHeartEffect();
 </script>
 </body>
 </html>
