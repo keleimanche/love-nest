@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>💕 爱心消除 - 恋爱小窝</title>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body {
+            font-family: 'PingFang SC', 'Microsoft YaHei', -apple-system, sans-serif;
+            background: linear-gradient(145deg, #fff5f7 0%, #fef0f5 100%);
+            background-attachment: fixed;
+            color: #4a3538;
+            min-height: 100vh;
+            padding: 20px 16px 80px;
+            user-select: none;
+        }
+        .container { max-width: 480px; margin: 0 auto; }
+        
+        .page-header {
+            text-align: center;
+            background: rgba(255, 255, 255, 0.97);
+            border-radius: 32px;
+            padding: 20px 16px;
+            margin-bottom: 16px;
+            box-shadow: 0 8px 24px rgba(242, 167, 179, 0.12);
+        }
+        .page-icon { font-size: 42px; margin-bottom: 6px; }
+        .page-title { font-size: 20px; font-weight: 700; color: #d46b7a; }
+        
+        .game-info {
+            display: flex;
+            justify-content: space-around;
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+        .info-item {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 16px;
+            padding: 12px;
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+        .info-label { font-size: 11px; color: #b4868f; }
+        .info-value { font-size: 22px; font-weight: 700; color: #f2a7b3; margin-top: 2px; }
+        
+        .game-board {
+            background: rgba(255, 255, 255, 0.97);
+            border-radius: 24px;
+            padding: 12px;
+            box-shadow: 0 8px 24px rgba(242, 167, 179, 0.12);
+            margin-bottom: 16px;
+        }
+        
+        .board-grid {
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            gap: 4px;
+            background: #fef2f5;
+            border-radius: 16px;
+            padding: 8px;
+        }
+        
+        .cell {
+            aspect-ratio: 1;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            cursor: pointer;
+            transition: transform 0.15s, opacity 0.15s;
+            border: 2px solid transparent;
+        }
+        .cell:hover { transform: scale(1.1); }
+        .cell.selected {
+            border-color: #f2a7b3;
+            background: rgba(242, 167, 179, 0.2);
+            transform: scale(1.1);
+        }
+        .cell.matched {
+            animation: matchPop 0.3s ease-out;
+        }
+        @keyframes matchPop {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.3); opacity: 0.5; }
+            100% { transform: scale(0); opacity: 0; }
+        }
+        .cell.drop {
+            animation: dropIn 0.3s ease-out;
+        }
+        @keyframes dropIn {
+            0% { transform: translateY(-100px); opacity: 0; }
+            100% { transform: translateY(0); opacity: 1; }
+        }
+        
+        .controls {
+            display: flex;
+            gap: 10px;
+        }
+        .control-btn {
+            flex: 1;
+            padding: 14px;
+            background: linear-gradient(135deg, #f2a7b3, #d4858f);
+            color: white;
+            border: none;
+            border-radius: 20px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .control-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(242, 167, 179, 0.3); }
+        .control-btn:active { transform: scale(0.98); }
+        
+        .combo-text {
+            text-align: center;
+            font-size: 24px;
+            font-weight: 700;
+            color: #f2a7b3;
+            margin: 12px 0;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .combo-text.show { opacity: 1; }
+        
+        .nav-bar {
+            position: fixed; bottom: 0; left: 0; right: 0;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            display: flex;
+            justify-content: space-around;
+            padding: 10px 0 max(10px, env(safe-area-inset-bottom));
+            box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.06);
+            z-index: 100;
+        }
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            text-decoration: none;
+            color: #c4939d;
+            font-size: 11px;
+            transition: 0.2s;
+        }
+        .nav-item.active { color: #f2a7b3; }
+        .nav-icon { font-size: 22px; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="page-header">
+        <div class="page-icon">💕</div>
+        <div class="page-title">爱心消除</div>
+    </div>
+    
+    <div class="game-info">
+        <div class="info-item">
+            <div class="info-label">分数</div>
+            <div class="info-value" id="score">0</div>
+        </div>
+        <div class="info-item">
+            <div class="info-label">最高分</div>
+            <div class="info-value" id="highScore">0</div>
+        </div>
+        <div class="info-item">
+            <div class="info-label">移动</div>
+            <div class="info-value" id="moves">0</div>
+        </div>
+    </div>
+    
+    <div class="game-board">
+        <div class="board-grid" id="board"></div>
+    </div>
+    
+    <div class="combo-text" id="comboText"></div>
+    
+    <div class="controls">
+        <button class="control-btn" onclick="resetGame()">🔄 重新开始</button>
+    </div>
+</div>
+
+<div class="nav-bar">
+    <a href="index.html" class="nav-item"><span class="nav-icon">🏠</span>主页</a>
+    <a href="diary.html" class="nav-item"><span class="nav-icon">📝</span>碎碎念</a>
+    <a href="games.html" class="nav-item active"><span class="nav-icon">🎮</span>游戏</a>
+    <a href="settings.html" class="nav-item"><span class="nav-icon">⚙️</span>设置</a>
+</div>
+
+<script src="common.js"></script>
+<script>
+    const BOARD_SIZE = 8;
+    const TYPES = ['💕', '💖', '💗', '💝', '❤️', '🩷'];
+    
+    let board = [];
+    let selected = null;
+    let score = 0;
+    let moves = 0;
+    let highScore = parseInt(localStorage.getItem('match3HighScore') || '0');
+    let isProcessing = false;
+    
+    function init() {
+        document.getElementById('highScore').textContent = highScore;
+        resetGame();
+    }
+    
+    function resetGame() {
+        board = [];
+        score = 0;
+        moves = 0;
+        selected = null;
+        isProcessing = false;
+        
+        document.getElementById('score').textContent = '0';
+        document.getElementById('moves').textContent = '0';
+        document.getElementById('comboText').classList.remove('show');
+        
+        generateBoard();
+        renderBoard();
+        
+        // 自动消除初始匹配
+        setTimeout(() => {
+            processMatches();
+        }, 500);
+    }
+    
+    function generateBoard() {
+        for (let row = 0; row < BOARD_SIZE; row++) {
+            board[row] = [];
+            for (let col = 0; col < BOARD_SIZE; col++) {
+                board[row][col] = getRandomType();
+            }
+        }
+        
+        // 确保初始状态没有匹配
+        while (findMatches().length > 0) {
+            for (let row = 0; row < BOARD_SIZE; row++) {
+                for (let col = 0; col < BOARD_SIZE; col++) {
+                    board[row][col] = getRandomType();
+                }
+            }
+        }
+    }
+    
+    function getRandomType() {
+        return TYPES[Math.floor(Math.random() * TYPES.length)];
+    }
+    
+    function renderBoard() {
+        const boardEl = document.getElementById('board');
+        boardEl.innerHTML = '';
+        
+        for (let row = 0; row < BOARD_SIZE; row++) {
+            for (let col = 0; col < BOARD_SIZE; col++) {
+                const cell = document.createElement('div');
+                cell.className = 'cell';
+                cell.textContent = board[row][col];
+                cell.dataset.row = row;
+                cell.dataset.col = col;
+                cell.onclick = () => handleClick(row, col);
+                boardEl.appendChild(cell);
+            }
+        }
+        
+        updateSelected();
+    }
+    
+    function updateSelected() {
+        const cells = document.querySelectorAll('.cell');
+        cells.forEach(cell => {
+            cell.classList.remove('selected');
+            const row = parseInt(cell.dataset.row);
+            const col = parseInt(cell.dataset.col);
+            if (selected && selected.row === row && selected.col === col) {
+                cell.classList.add('selected');
+            }
+        });
+    }
+    
+    function handleClick(row, col) {
+        if (isProcessing) return;
+        
+        if (!selected) {
+            selected = { row, col };
+            updateSelected();
+        } else {
+            const dr = Math.abs(selected.row - row);
+            const dc = Math.abs(selected.col - col);
+            
+            if ((dr === 1 && dc === 0) || (dr === 0 && dc === 1)) {
+                swap(selected.row, selected.col, row, col);
+            } else {
+                selected = { row, col };
+                updateSelected();
+            }
+        }
+    }
+    
+    async function swap(r1, c1, r2, c2) {
+        isProcessing = true;
+        selected = null;
+        updateSelected();
+        
+        // 交换
+        const temp = board[r1][c1];
+        board[r1][c1] = board[r2][c2];
+        board[r2][c2] = temp;
+        renderBoard();
+        
+        const matches = findMatches();
+        
+        if (matches.length === 0) {
+            // 无效交换，换回来
+            await sleep(200);
+            board[r2][c2] = board[r1][c1];
+            board[r1][c1] = temp;
+            renderBoard();
+            isProcessing = false;
+        } else {
+            moves++;
+            document.getElementById('moves').textContent = moves;
+            await processMatches();
+        }
+    }
+    
+    async function processMatches() {
+        let combo = 0;
+        
+        while (true) {
+            const matches = findMatches();
+            if (matches.length === 0) break;
+            
+            combo++;
+            
+            // 显示连击
+            if (combo > 1) {
+                const comboEl = document.getElementById('comboText');
+                comboEl.textContent = `🔥 ${combo} 连击！`;
+                comboEl.classList.add('show');
+                setTimeout(() => comboEl.classList.remove('show'), 800);
+            }
+            
+            // 计分
+            const points = matches.length * 10 * combo;
+            score += points;
+            document.getElementById('score').textContent = score;
+            
+            if (score > highScore) {
+                highScore = score;
+                localStorage.setItem('match3HighScore', highScore);
+                document.getElementById('highScore').textContent = highScore;
+            }
+            
+            // 消除动画
+            markMatches(matches);
+            await sleep(300);
+            
+            // 移除匹配
+            removeMatches(matches);
+            renderBoard();
+            
+            // 下落填充
+            await sleep(100);
+            dropTiles();
+            renderBoard();
+            
+            // 填充新方块
+            fillBoard();
+            renderBoard();
+            
+            await sleep(200);
+        }
+        
+        isProcessing = false;
+    }
+    
+    function findMatches() {
+        const matches = [];
+        
+        // 横向检查
+        for (let row = 0; row < BOARD_SIZE; row++) {
+            for (let col = 0; col < BOARD_SIZE - 2; col++) {
+                const type = board[row][col];
+                if (type && type === board[row][col + 1] && type === board[row][col + 2]) {
+                    matches.push({ row, col });
+                    matches.push({ row, col: col + 1 });
+                    matches.push({ row, col: col + 2 });
+                }
+            }
+        }
+        
+        // 纵向检查
+        for (let col = 0; col < BOARD_SIZE; col++) {
+            for (let row = 0; row < BOARD_SIZE - 2; row++) {
+                const type = board[row][col];
+                if (type && type === board[row + 1][col] && type === board[row + 2][col]) {
+                    matches.push({ row, col });
+                    matches.push({ row: row + 1, col });
+                    matches.push({ row: row + 2, col });
+                }
+            }
+        }
+        
+        // 去重
+        const unique = [];
+        matches.forEach(m => {
+            if (!unique.find(u => u.row === m.row && u.col === m.col)) {
+                unique.push(m);
+            }
+        });
+        
+        return unique;
+    }
+    
+    function markMatches(matches) {
+        const cells = document.querySelectorAll('.cell');
+        matches.forEach(m => {
+            const index = m.row * BOARD_SIZE + m.col;
+            cells[index].classList.add('matched');
+        });
+    }
+    
+    function removeMatches(matches) {
+        matches.forEach(m => {
+            board[m.row][m.col] = null;
+        });
+    }
+    
+    function dropTiles() {
+        for (let col = 0; col < BOARD_SIZE; col++) {
+            let emptyRow = BOARD_SIZE - 1;
+            for (let row = BOARD_SIZE - 1; row >= 0; row--) {
+                if (board[row][col] !== null) {
+                    if (row !== emptyRow) {
+                        board[emptyRow][col] = board[row][col];
+                        board[row][col] = null;
+                    }
+                    emptyRow--;
+                }
+            }
+        }
+    }
+    
+    function fillBoard() {
+        for (let row = 0; row < BOARD_SIZE; row++) {
+            for (let col = 0; col < BOARD_SIZE; col++) {
+                if (board[row][col] === null) {
+                    board[row][col] = getRandomType();
+                }
+            }
+        }
+    }
+    
+    function sleep(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
+    
+    initFirebase();
+    setupHeartEffect();
+    init();
+</script>
+</body>
+</html>

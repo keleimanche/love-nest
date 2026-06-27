@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>🧩 猜谜语 - 恋爱小窝</title>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body {
+            font-family: 'PingFang SC', 'Microsoft YaHei', -apple-system, sans-serif;
+            background: linear-gradient(145deg, #fff5f7 0%, #fef0f5 100%);
+            background-attachment: fixed;
+            color: #4a3538;
+            min-height: 100vh;
+            padding: 20px 16px 80px;
+        }
+        .container { max-width: 480px; margin: 0 auto; }
+        
+        .page-header {
+            text-align: center;
+            background: rgba(255, 255, 255, 0.97);
+            border-radius: 32px;
+            padding: 24px 16px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 24px rgba(242, 167, 179, 0.12);
+        }
+        .page-icon { font-size: 48px; margin-bottom: 8px; }
+        .page-title { font-size: 22px; font-weight: 700; color: #d46b7a; }
+        
+        .score-board {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 20px;
+            gap: 12px;
+        }
+        .score-item {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 16px;
+            text-align: center;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+        }
+        .score-label { font-size: 12px; color: #b4868f; }
+        .score-value { font-size: 28px; font-weight: 700; color: #f2a7b3; margin-top: 4px; }
+        
+        .riddle-card {
+            background: rgba(255, 255, 255, 0.97);
+            border-radius: 28px;
+            padding: 28px 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 24px rgba(242, 167, 179, 0.12);
+        }
+        .riddle-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .riddle-number { font-size: 14px; color: #b4868f; }
+        .hint-btn {
+            background: linear-gradient(135deg, #f2a7b3, #d4858f);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .hint-btn:hover { transform: scale(1.05); }
+        .hint-btn:disabled { opacity: 0.5; cursor: default; transform: none; }
+        
+        .riddle-question {
+            font-size: 18px;
+            line-height: 1.8;
+            color: #4a3538;
+            text-align: center;
+            padding: 20px 0;
+            background: #fef2f5;
+            border-radius: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .hint-text {
+            background: #fff3e0;
+            border-left: 4px solid #ffb74d;
+            padding: 12px 16px;
+            border-radius: 12px;
+            margin-bottom: 16px;
+            font-size: 14px;
+            color: #e65100;
+            display: none;
+        }
+        .hint-text.show { display: block; }
+        
+        .answer-section {
+            margin-top: 20px;
+        }
+        .answer-input {
+            width: 100%;
+            padding: 14px 16px;
+            border: 2px solid #fce4e8;
+            border-radius: 20px;
+            font-size: 16px;
+            outline: none;
+            transition: 0.2s;
+            background: white;
+        }
+        .answer-input:focus { border-color: #f2a7b3; }
+        
+        .submit-btn {
+            width: 100%;
+            margin-top: 12px;
+            padding: 14px;
+            background: linear-gradient(135deg, #f2a7b3, #d4858f);
+            color: white;
+            border: none;
+            border-radius: 20px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .submit-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(242, 167, 179, 0.3); }
+        .submit-btn:active { transform: scale(0.98); }
+        
+        .result {
+            text-align: center;
+            padding: 16px;
+            border-radius: 16px;
+            margin-top: 16px;
+            font-size: 15px;
+            display: none;
+        }
+        .result.correct {
+            display: block;
+            background: #d4edda;
+            color: #155724;
+        }
+        .result.wrong {
+            display: block;
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .next-btn {
+            width: 100%;
+            margin-top: 16px;
+            padding: 14px;
+            background: linear-gradient(135deg, #b85c6a, #9e4a57);
+            color: white;
+            border: none;
+            border-radius: 20px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+            display: none;
+        }
+        .next-btn.show { display: block; }
+        .next-btn:hover { transform: translateY(-2px); }
+        
+        .nav-bar {
+            position: fixed; bottom: 0; left: 0; right: 0;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            display: flex;
+            justify-content: space-around;
+            padding: 10px 0 max(10px, env(safe-area-inset-bottom));
+            box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.06);
+            z-index: 100;
+        }
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            text-decoration: none;
+            color: #c4939d;
+            font-size: 11px;
+            transition: 0.2s;
+        }
+        .nav-item.active { color: #f2a7b3; }
+        .nav-icon { font-size: 22px; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="page-header">
+        <div class="page-icon">🧩</div>
+        <div class="page-title">猜谜语</div>
+    </div>
+    
+    <div class="score-board">
+        <div class="score-item">
+            <div class="score-label">当前得分</div>
+            <div class="score-value" id="currentScore">0</div>
+        </div>
+        <div class="score-item">
+            <div class="score-label">最高纪录</div>
+            <div class="score-value" id="highScore">0</div>
+        </div>
+        <div class="score-item">
+            <div class="score-label">剩余提示</div>
+            <div class="score-value" id="hintsLeft">3</div>
+        </div>
+    </div>
+    
+    <div class="riddle-card">
+        <div class="riddle-header">
+            <span class="riddle-number">第 <span id="riddleNum">1</span> 题</span>
+            <button class="hint-btn" id="hintBtn" onclick="showHint()">💡 提示 (-10分)</button>
+        </div>
+        <div class="riddle-question" id="riddleQuestion">加载中...</div>
+        <div class="hint-text" id="hintText"></div>
+        
+        <div class="answer-section">
+            <input type="text" class="answer-input" id="answerInput" placeholder="输入你的答案..." onkeypress="if(event.key==='Enter') checkAnswer()">
+            <button class="submit-btn" onclick="checkAnswer()">确认答案</button>
+            <div class="result" id="result"></div>
+            <button class="next-btn" id="nextBtn" onclick="nextRiddle()">下一题</button>
+        </div>
+    </div>
+</div>
+
+<div class="nav-bar">
+    <a href="index.html" class="nav-item"><span class="nav-icon">🏠</span>主页</a>
+    <a href="diary.html" class="nav-item"><span class="nav-icon">📝</span>碎碎念</a>
+    <a href="games.html" class="nav-item active"><span class="nav-icon">🎮</span>游戏</a>
+    <a href="settings.html" class="nav-item"><span class="nav-icon">⚙️</span>设置</a>
+</div>
+
+<script src="common.js"></script>
+<script>
+    const riddles = [
+        { q: "什么东西早上四条腿，中午两条腿，晚上三条腿？", a: "人", hint: "人生的三个阶段" },
+        { q: "什么东西越洗越脏？", a: "水", hint: "洗东西用的" },
+        { q: "什么人一年只工作一天？", a: "圣诞老人", hint: "穿红衣送礼物" },
+        { q: "什么东西打破了才能用？", a: "鸡蛋", hint: "做菜用的" },
+        { q: "什么路不能走？", a: "电路", hint: "电子产品里的" },
+        { q: "什么门没有门栓？", a: "球门", hint: "运动场上的" },
+        { q: "什么东西越热越爱出来？", a: "汗", hint: "夏天会流" },
+        { q: "什么书在书店买不到？", a: "秘书", hint: "一种职业" },
+        { q: "什么帽不能戴？", a: "螺帽", hint: "机械零件" },
+        { q: "什么虎不会咬人？", a: "壁虎", hint: "爬墙的动物" },
+        { q: "什么球不能踢？", a: "地球", hint: "我们生活的星球" },
+        { q: "什么河没有水？", a: "棋河", hint: "象棋里的" },
+        { q: "两个人分五个苹果，怎么分最公平？", a: "榨汁", hint: "变成液体" },
+        { q: "什么桥不能走？", a: "鼻梁", hint: "脸上的" },
+        { q: "什么东西天气越热，它爬得越高？", a: "温度计", hint: "测量温度的" }
+    ];
+    
+    let currentRiddle = 0;
+    let score = 0;
+    let highScore = parseInt(localStorage.getItem('riddleHighScore') || '0');
+    let hintsUsed = 0;
+    let maxHints = 3;
+    let answered = false;
+    let shuffledRiddles = [];
+    
+    function shuffle(array) {
+        const arr = [...array];
+        for (let i = arr.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [arr[i], arr[j]] = [arr[j], arr[i]];
+        }
+        return arr;
+    }
+    
+    function init() {
+        shuffledRiddles = shuffle(riddles);
+        document.getElementById('highScore').textContent = highScore;
+        loadRiddle();
+    }
+    
+    function loadRiddle() {
+        if (currentRiddle >= shuffledRiddles.length) {
+            currentRiddle = 0;
+            shuffledRiddles = shuffle(riddles);
+        }
+        
+        const r = shuffledRiddles[currentRiddle];
+        document.getElementById('riddleNum').textContent = currentRiddle + 1;
+        document.getElementById('riddleQuestion').textContent = r.q;
+        document.getElementById('hintText').textContent = '💡 提示：' + r.hint;
+        document.getElementById('hintText').classList.remove('show');
+        document.getElementById('answerInput').value = '';
+        document.getElementById('answerInput').disabled = false;
+        document.getElementById('result').className = 'result';
+        document.getElementById('result').textContent = '';
+        document.getElementById('nextBtn').classList.remove('show');
+        document.getElementById('hintBtn').disabled = false;
+        answered = false;
+    }
+    
+    function showHint() {
+        if (answered || hintsUsed >= maxHints) return;
+        
+        hintsUsed++;
+        score = Math.max(0, score - 10);
+        document.getElementById('currentScore').textContent = score;
+        document.getElementById('hintsLeft').textContent = maxHints - hintsUsed;
+        document.getElementById('hintText').classList.add('show');
+        
+        if (hintsUsed >= maxHints) {
+            document.getElementById('hintBtn').disabled = true;
+        }
+    }
+    
+    function checkAnswer() {
+        if (answered) return;
+        
+        const input = document.getElementById('answerInput').value.trim();
+        if (!input) {
+            alert('请输入答案！');
+            return;
+        }
+        
+        answered = true;
+        const correct = shuffledRiddles[currentRiddle].a;
+        const resultEl = document.getElementById('result');
+        
+        if (input === correct) {
+            score += 20;
+            resultEl.className = 'result correct';
+            resultEl.textContent = '🎉 回答正确！+20分';
+            document.getElementById('currentScore').textContent = score;
+            
+            if (score > highScore) {
+                highScore = score;
+                localStorage.setItem('riddleHighScore', highScore);
+                document.getElementById('highScore').textContent = highScore;
+            }
+        } else {
+            resultEl.className = 'result wrong';
+            resultEl.textContent = `❌ 答错了！正确答案是：${correct}`;
+        }
+        
+        document.getElementById('answerInput').disabled = true;
+        document.getElementById('nextBtn').classList.add('show');
+        document.getElementById('hintBtn').disabled = true;
+    }
+    
+    function nextRiddle() {
+        currentRiddle++;
+        hintsUsed = 0;
+        document.getElementById('hintsLeft').textContent = maxHints;
+        loadRiddle();
+    }
+    
+    initFirebase();
+    setupHeartEffect();
+    init();
+</script>
+</body>
+</html>
