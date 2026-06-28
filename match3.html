@@ -451,7 +451,9 @@
     }
     
     function updateHighScoreDisplay() {
-        document.getElementById('highScore').textContent = highScore[currentDifficulty] || 0;
+        const displayValue = highScore[currentDifficulty] || 0;
+        console.log('更新最高分显示 - 难度:', currentDifficulty, '分数:', displayValue);
+        document.getElementById('highScore').textContent = displayValue;
     }
     
     function startGame() {
@@ -767,13 +769,15 @@
             try {
                 localStorage.setItem('match3HighScore', JSON.stringify(highScore));
                 console.log('保存成功，新最高分:', highScore);
-                updateHighScoreDisplay();
             } catch (e) {
                 console.error('保存失败:', e);
             }
         } else {
             console.log('分数未超过最高分，不保存');
         }
+        
+        // 更新最高分显示（在弹窗显示之前）
+        updateHighScoreDisplay();
         
         document.getElementById('finalScore').textContent = score;
         document.getElementById('finalMoves').textContent = moves;
