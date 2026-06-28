@@ -422,11 +422,21 @@
     let gameActive = false;
     
     function init() {
-        highScore = JSON.parse(localStorage.getItem('match3HighScore') || '{}');
-        if (!highScore.easy) highScore.easy = 0;
-        if (!highScore.medium) highScore.medium = 0;
-        if (!highScore.hard) highScore.hard = 0;
+        try {
+            const saved = localStorage.getItem('match3HighScore');
+            console.log('读取到的保存数据:', saved);
+            highScore = saved ? JSON.parse(saved) : {};
+        } catch (e) {
+            console.error('读取最高分失败:', e);
+            highScore = {};
+        }
         
+        // 确保所有难度都有初始值
+        if (typeof highScore.easy !== 'number') highScore.easy = 0;
+        if (typeof highScore.medium !== 'number') highScore.medium = 0;
+        if (typeof highScore.hard !== 'number') highScore.hard = 0;
+        
+        console.log('初始化后的最高分:', highScore);
         updateHighScoreDisplay();
         startGame();
     }
@@ -629,10 +639,16 @@
         
         isProcessing = false;
         
-        if (score > highScore[currentDifficulty]) {
+        // 无限时模式：实时保存最高分
+        if (maxTime === 0 && score > (highScore[currentDifficulty] || 0)) {
             highScore[currentDifficulty] = score;
-            localStorage.setItem('match3HighScore', JSON.stringify(highScore));
-            updateHighScoreDisplay();
+            try {
+                localStorage.setItem('match3HighScore', JSON.stringify(highScore));
+                console.log('简单模式保存成功:', highScore);
+                updateHighScoreDisplay();
+            } catch (e) {
+                console.error('保存失败:', e);
+            }
         }
     }
     
@@ -743,10 +759,20 @@
         stopTimer();
         
         // 保存最高分
-        if (score > highScore[currentDifficulty]) {
+        console.log('游戏结束，当前分数:', score, '当前难度:', currentDifficulty);
+        console.log('保存前最高分:', highScore);
+        
+        if (score > (highScore[currentDifficulty] || 0)) {
             highScore[currentDifficulty] = score;
-            localStorage.setItem('match3HighScore', JSON.stringify(highScore));
-            updateHighScoreDisplay();
+            try {
+                localStorage.setItem('match3HighScore', JSON.stringify(highScore));
+                console.log('保存成功，新最高分:', highScore);
+                updateHighScoreDisplay();
+            } catch (e) {
+                console.error('保存失败:', e);
+            }
+        } else {
+            console.log('分数未超过最高分，不保存');
         }
         
         document.getElementById('finalScore').textContent = score;
