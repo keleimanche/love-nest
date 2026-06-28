@@ -30,6 +30,30 @@
         .page-icon { font-size: 42px; margin-bottom: 6px; }
         .page-title { font-size: 20px; font-weight: 700; color: #d46b7a; }
         
+        .difficulty-selector {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+        .diff-btn {
+            flex: 1;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.95);
+            border: 2px solid transparent;
+            border-radius: 16px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+            text-align: center;
+        }
+        .diff-btn:hover { transform: translateY(-2px); }
+        .diff-btn.active {
+            border-color: #f2a7b3;
+            background: rgba(242, 167, 179, 0.15);
+        }
+        .diff-label { font-size: 11px; color: #b4868f; display: block; margin-top: 4px; }
+        
         .game-info {
             display: flex;
             justify-content: space-around;
@@ -47,6 +71,33 @@
         .info-label { font-size: 11px; color: #b4868f; }
         .info-value { font-size: 22px; font-weight: 700; color: #f2a7b3; margin-top: 2px; }
         
+        .timer-bar {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 16px;
+            padding: 8px 12px;
+            margin-bottom: 16px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+        .timer-progress {
+            height: 8px;
+            background: #fce4e8;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .timer-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #f2a7b3, #d4858f);
+            border-radius: 8px;
+            transition: width 0.3s;
+        }
+        .timer-text {
+            text-align: center;
+            font-size: 14px;
+            font-weight: 600;
+            color: #d46b7a;
+            margin-top: 6px;
+        }
+        
         .game-board {
             background: rgba(255, 255, 255, 0.97);
             border-radius: 24px;
@@ -57,7 +108,6 @@
         
         .board-grid {
             display: grid;
-            grid-template-columns: repeat(8, 1fr);
             gap: 4px;
             background: #fef2f5;
             border-radius: 16px;
@@ -71,7 +121,6 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 28px;
             cursor: pointer;
             transition: transform 0.15s, opacity 0.15s;
             border: 2px solid transparent;
@@ -82,21 +131,28 @@
             background: rgba(242, 167, 179, 0.2);
             transform: scale(1.1);
         }
-        .cell.matched {
-            animation: matchPop 0.3s ease-out;
-        }
+        .cell.matched { animation: matchPop 0.3s ease-out; }
         @keyframes matchPop {
             0% { transform: scale(1); opacity: 1; }
             50% { transform: scale(1.3); opacity: 0.5; }
             100% { transform: scale(0); opacity: 0; }
         }
-        .cell.drop {
-            animation: dropIn 0.3s ease-out;
-        }
+        .cell.drop { animation: dropIn 0.3s ease-out; }
         @keyframes dropIn {
             0% { transform: translateY(-100px); opacity: 0; }
             100% { transform: translateY(0); opacity: 1; }
         }
+        
+        .combo-text {
+            text-align: center;
+            font-size: 24px;
+            font-weight: 700;
+            color: #f2a7b3;
+            margin: 12px 0;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .combo-text.show { opacity: 1; }
         
         .controls {
             display: flex;
@@ -116,17 +172,90 @@
         }
         .control-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(242, 167, 179, 0.3); }
         .control-btn:active { transform: scale(0.98); }
-        
-        .combo-text {
-            text-align: center;
-            font-size: 24px;
-            font-weight: 700;
-            color: #f2a7b3;
-            margin: 12px 0;
-            opacity: 0;
-            transition: opacity 0.3s;
+        .control-btn.secondary {
+            background: rgba(255, 255, 255, 0.95);
+            color: #d46b7a;
         }
-        .combo-text.show { opacity: 1; }
+        
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: 0.3s;
+        }
+        .modal.show { opacity: 1; visibility: visible; }
+        .modal-content {
+            background: white;
+            border-radius: 28px;
+            padding: 28px 20px;
+            max-width: 400px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
+        }
+        .modal-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: #d46b7a;
+            text-align: center;
+            margin-bottom: 16px;
+        }
+        .modal-body {
+            font-size: 14px;
+            line-height: 1.8;
+            color: #4a3538;
+        }
+        .rule-item {
+            padding: 10px 0;
+            border-bottom: 1px solid #fce4e8;
+        }
+        .rule-item:last-child { border-bottom: none; }
+        .rule-icon { font-size: 20px; margin-right: 8px; }
+        .modal-close {
+            width: 100%;
+            margin-top: 20px;
+            padding: 14px;
+            background: linear-gradient(135deg, #f2a7b3, #d4858f);
+            color: white;
+            border: none;
+            border-radius: 20px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        
+        .game-over-modal .modal-content {
+            text-align: center;
+        }
+        .final-score {
+            font-size: 48px;
+            font-weight: 800;
+            color: #f2a7b3;
+            margin: 20px 0;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin: 20px 0;
+        }
+        .stat-item {
+            background: #fef2f5;
+            border-radius: 12px;
+            padding: 12px;
+        }
+        .stat-label { font-size: 12px; color: #b4868f; }
+        .stat-value { font-size: 20px; font-weight: 700; color: #d46b7a; margin-top: 4px; }
         
         .nav-bar {
             position: fixed; bottom: 0; left: 0; right: 0;
@@ -159,6 +288,21 @@
         <div class="page-title">爱心消除</div>
     </div>
     
+    <div class="difficulty-selector">
+        <button class="diff-btn active" onclick="setDifficulty('easy')">
+            🌱 简单
+            <span class="diff-label">6x6 无限时</span>
+        </button>
+        <button class="diff-btn" onclick="setDifficulty('medium')">
+            🌿 普通
+            <span class="diff-label">8x8 90秒</span>
+        </button>
+        <button class="diff-btn" onclick="setDifficulty('hard')">
+            🌳 困难
+            <span class="diff-label">10x10 60秒</span>
+        </button>
+    </div>
+    
     <div class="game-info">
         <div class="info-item">
             <div class="info-label">分数</div>
@@ -174,6 +318,13 @@
         </div>
     </div>
     
+    <div class="timer-bar" id="timerBar" style="display: none;">
+        <div class="timer-progress">
+            <div class="timer-fill" id="timerFill"></div>
+        </div>
+        <div class="timer-text" id="timerText">90秒</div>
+    </div>
+    
     <div class="game-board">
         <div class="board-grid" id="board"></div>
     </div>
@@ -181,7 +332,61 @@
     <div class="combo-text" id="comboText"></div>
     
     <div class="controls">
-        <button class="control-btn" onclick="resetGame()">🔄 重新开始</button>
+        <button class="control-btn secondary" onclick="showRules()">📋 规则</button>
+        <button class="control-btn" onclick="startGame()">🔄 开始游戏</button>
+    </div>
+</div>
+
+<div class="modal" id="rulesModal">
+    <div class="modal-content">
+        <div class="modal-title">💕 游戏规则</div>
+        <div class="modal-body">
+            <div class="rule-item">
+                <span class="rule-icon">👆</span>
+                <strong>基本操作：</strong>点击一个爱心，再点击相邻的爱心进行交换
+            </div>
+            <div class="rule-item">
+                <span class="rule-icon">✨</span>
+                <strong>消除规则：</strong>3个或更多相同的爱心连成一线（横向或纵向）即可消除
+            </div>
+            <div class="rule-item">
+                <span class="rule-icon">🔥</span>
+                <strong>连击加分：</strong>连续消除会触发连击，连击次数越高，分数倍数越大
+            </div>
+            <div class="rule-item">
+                <span class="rule-icon">⏱️</span>
+                <strong>难度说明：</strong>
+                <br>• 简单：6x6棋盘，无时间限制
+                <br>• 普通：8x8棋盘，90秒限时
+                <br>• 困难：10x10棋盘，60秒限时
+            </div>
+            <div class="rule-item">
+                <span class="rule-icon">🏆</span>
+                <strong>计分规则：</strong>
+                <br>• 基础分 = 消除数量 × 10
+                <br>• 连击加成 = 基础分 × 连击数
+                <br>• 困难模式额外 × 1.5倍
+            </div>
+        </div>
+        <button class="modal-close" onclick="hideRules()">知道了</button>
+    </div>
+</div>
+
+<div class="modal game-over-modal" id="gameOverModal">
+    <div class="modal-content">
+        <div class="modal-title">🎉 游戏结束</div>
+        <div class="final-score" id="finalScore">0</div>
+        <div class="stats-grid">
+            <div class="stat-item">
+                <div class="stat-label">移动次数</div>
+                <div class="stat-value" id="finalMoves">0</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">最高连击</div>
+                <div class="stat-value" id="finalCombo">0</div>
+            </div>
+        </div>
+        <button class="modal-close" onclick="hideGameOver(); startGame();">再来一局</button>
     </div>
 </div>
 
@@ -194,27 +399,74 @@
 
 <script src="common.js"></script>
 <script>
-    const BOARD_SIZE = 8;
+    const DIFFICULTIES = {
+        easy: { size: 6, time: 0, multiplier: 1, name: '简单' },
+        medium: { size: 8, time: 90, multiplier: 1, name: '普通' },
+        hard: { size: 10, time: 60, multiplier: 1.5, name: '困难' }
+    };
+    
     const TYPES = ['💕', '💖', '💗', '💝', '❤️', '🩷'];
     
+    let currentDifficulty = 'easy';
+    let boardSize = 6;
     let board = [];
     let selected = null;
     let score = 0;
     let moves = 0;
-    let highScore = parseInt(localStorage.getItem('match3HighScore') || '0');
+    let highScore = {};
     let isProcessing = false;
+    let timer = 0;
+    let timerInterval = null;
+    let maxTime = 0;
+    let maxCombo = 0;
+    let gameActive = false;
     
     function init() {
-        document.getElementById('highScore').textContent = highScore;
-        resetGame();
+        highScore = JSON.parse(localStorage.getItem('match3HighScore') || '{}');
+        if (!highScore.easy) highScore.easy = 0;
+        if (!highScore.medium) highScore.medium = 0;
+        if (!highScore.hard) highScore.hard = 0;
+        
+        updateHighScoreDisplay();
+        startGame();
     }
     
-    function resetGame() {
+    function setDifficulty(diff) {
+        currentDifficulty = diff;
+        document.querySelectorAll('.diff-btn').forEach(btn => btn.classList.remove('active'));
+        event.target.closest('.diff-btn').classList.add('active');
+        
+        const config = DIFFICULTIES[diff];
+        const timerBar = document.getElementById('timerBar');
+        
+        if (config.time > 0) {
+            timerBar.style.display = 'block';
+        } else {
+            timerBar.style.display = 'none';
+        }
+        
+        updateHighScoreDisplay();
+    }
+    
+    function updateHighScoreDisplay() {
+        document.getElementById('highScore').textContent = highScore[currentDifficulty] || 0;
+    }
+    
+    function startGame() {
+        stopTimer();
+        
+        const config = DIFFICULTIES[currentDifficulty];
+        boardSize = config.size;
+        maxTime = config.time;
+        timer = maxTime;
+        
         board = [];
         score = 0;
         moves = 0;
         selected = null;
         isProcessing = false;
+        maxCombo = 0;
+        gameActive = true;
         
         document.getElementById('score').textContent = '0';
         document.getElementById('moves').textContent = '0';
@@ -223,24 +475,26 @@
         generateBoard();
         renderBoard();
         
-        // 自动消除初始匹配
+        if (maxTime > 0) {
+            startTimer();
+        }
+        
         setTimeout(() => {
             processMatches();
         }, 500);
     }
     
     function generateBoard() {
-        for (let row = 0; row < BOARD_SIZE; row++) {
+        for (let row = 0; row < boardSize; row++) {
             board[row] = [];
-            for (let col = 0; col < BOARD_SIZE; col++) {
+            for (let col = 0; col < boardSize; col++) {
                 board[row][col] = getRandomType();
             }
         }
         
-        // 确保初始状态没有匹配
         while (findMatches().length > 0) {
-            for (let row = 0; row < BOARD_SIZE; row++) {
-                for (let col = 0; col < BOARD_SIZE; col++) {
+            for (let row = 0; row < boardSize; row++) {
+                for (let col = 0; col < boardSize; col++) {
                     board[row][col] = getRandomType();
                 }
             }
@@ -254,12 +508,16 @@
     function renderBoard() {
         const boardEl = document.getElementById('board');
         boardEl.innerHTML = '';
+        boardEl.style.gridTemplateColumns = `repeat(${boardSize}, 1fr)`;
         
-        for (let row = 0; row < BOARD_SIZE; row++) {
-            for (let col = 0; col < BOARD_SIZE; col++) {
+        const cellSize = boardSize <= 6 ? '32px' : boardSize <= 8 ? '28px' : '24px';
+        
+        for (let row = 0; row < boardSize; row++) {
+            for (let col = 0; col < boardSize; col++) {
                 const cell = document.createElement('div');
                 cell.className = 'cell';
                 cell.textContent = board[row][col];
+                cell.style.fontSize = cellSize;
                 cell.dataset.row = row;
                 cell.dataset.col = col;
                 cell.onclick = () => handleClick(row, col);
@@ -283,7 +541,7 @@
     }
     
     function handleClick(row, col) {
-        if (isProcessing) return;
+        if (isProcessing || !gameActive) return;
         
         if (!selected) {
             selected = { row, col };
@@ -306,7 +564,6 @@
         selected = null;
         updateSelected();
         
-        // 交换
         const temp = board[r1][c1];
         board[r1][c1] = board[r2][c2];
         board[r2][c2] = temp;
@@ -315,7 +572,6 @@
         const matches = findMatches();
         
         if (matches.length === 0) {
-            // 无效交换，换回来
             await sleep(200);
             board[r2][c2] = board[r1][c1];
             board[r1][c1] = temp;
@@ -330,14 +586,15 @@
     
     async function processMatches() {
         let combo = 0;
+        const config = DIFFICULTIES[currentDifficulty];
         
         while (true) {
             const matches = findMatches();
             if (matches.length === 0) break;
             
             combo++;
+            if (combo > maxCombo) maxCombo = combo;
             
-            // 显示连击
             if (combo > 1) {
                 const comboEl = document.getElementById('comboText');
                 comboEl.textContent = `🔥 ${combo} 连击！`;
@@ -345,31 +602,20 @@
                 setTimeout(() => comboEl.classList.remove('show'), 800);
             }
             
-            // 计分
-            const points = matches.length * 10 * combo;
+            const points = Math.floor(matches.length * 10 * combo * config.multiplier);
             score += points;
             document.getElementById('score').textContent = score;
             
-            if (score > highScore) {
-                highScore = score;
-                localStorage.setItem('match3HighScore', highScore);
-                document.getElementById('highScore').textContent = highScore;
-            }
-            
-            // 消除动画
             markMatches(matches);
             await sleep(300);
             
-            // 移除匹配
             removeMatches(matches);
             renderBoard();
             
-            // 下落填充
             await sleep(100);
             dropTiles();
             renderBoard();
             
-            // 填充新方块
             fillBoard();
             renderBoard();
             
@@ -377,14 +623,19 @@
         }
         
         isProcessing = false;
+        
+        if (score > highScore[currentDifficulty]) {
+            highScore[currentDifficulty] = score;
+            localStorage.setItem('match3HighScore', JSON.stringify(highScore));
+            updateHighScoreDisplay();
+        }
     }
     
     function findMatches() {
         const matches = [];
         
-        // 横向检查
-        for (let row = 0; row < BOARD_SIZE; row++) {
-            for (let col = 0; col < BOARD_SIZE - 2; col++) {
+        for (let row = 0; row < boardSize; row++) {
+            for (let col = 0; col < boardSize - 2; col++) {
                 const type = board[row][col];
                 if (type && type === board[row][col + 1] && type === board[row][col + 2]) {
                     matches.push({ row, col });
@@ -394,9 +645,8 @@
             }
         }
         
-        // 纵向检查
-        for (let col = 0; col < BOARD_SIZE; col++) {
-            for (let row = 0; row < BOARD_SIZE - 2; row++) {
+        for (let col = 0; col < boardSize; col++) {
+            for (let row = 0; row < boardSize - 2; row++) {
                 const type = board[row][col];
                 if (type && type === board[row + 1][col] && type === board[row + 2][col]) {
                     matches.push({ row, col });
@@ -406,7 +656,6 @@
             }
         }
         
-        // 去重
         const unique = [];
         matches.forEach(m => {
             if (!unique.find(u => u.row === m.row && u.col === m.col)) {
@@ -420,7 +669,7 @@
     function markMatches(matches) {
         const cells = document.querySelectorAll('.cell');
         matches.forEach(m => {
-            const index = m.row * BOARD_SIZE + m.col;
+            const index = m.row * boardSize + m.col;
             cells[index].classList.add('matched');
         });
     }
@@ -432,9 +681,9 @@
     }
     
     function dropTiles() {
-        for (let col = 0; col < BOARD_SIZE; col++) {
-            let emptyRow = BOARD_SIZE - 1;
-            for (let row = BOARD_SIZE - 1; row >= 0; row--) {
+        for (let col = 0; col < boardSize; col++) {
+            let emptyRow = boardSize - 1;
+            for (let row = boardSize - 1; row >= 0; row--) {
                 if (board[row][col] !== null) {
                     if (row !== emptyRow) {
                         board[emptyRow][col] = board[row][col];
@@ -447,13 +696,64 @@
     }
     
     function fillBoard() {
-        for (let row = 0; row < BOARD_SIZE; row++) {
-            for (let col = 0; col < BOARD_SIZE; col++) {
+        for (let row = 0; row < boardSize; row++) {
+            for (let col = 0; col < boardSize; col++) {
                 if (board[row][col] === null) {
                     board[row][col] = getRandomType();
                 }
             }
         }
+    }
+    
+    function startTimer() {
+        const timerFill = document.getElementById('timerFill');
+        const timerText = document.getElementById('timerText');
+        
+        timerInterval = setInterval(() => {
+            timer--;
+            
+            const percent = (timer / maxTime) * 100;
+            timerFill.style.width = percent + '%';
+            timerText.textContent = timer + '秒';
+            
+            if (timer <= 10) {
+                timerFill.style.background = 'linear-gradient(90deg, #ff6b6b, #ee5a52)';
+            }
+            
+            if (timer <= 0) {
+                gameOver();
+            }
+        }, 1000);
+    }
+    
+    function stopTimer() {
+        if (timerInterval) {
+            clearInterval(timerInterval);
+            timerInterval = null;
+        }
+    }
+    
+    function gameOver() {
+        gameActive = false;
+        stopTimer();
+        
+        document.getElementById('finalScore').textContent = score;
+        document.getElementById('finalMoves').textContent = moves;
+        document.getElementById('finalCombo').textContent = maxCombo;
+        
+        document.getElementById('gameOverModal').classList.add('show');
+    }
+    
+    function showRules() {
+        document.getElementById('rulesModal').classList.add('show');
+    }
+    
+    function hideRules() {
+        document.getElementById('rulesModal').classList.remove('show');
+    }
+    
+    function hideGameOver() {
+        document.getElementById('gameOverModal').classList.remove('show');
     }
     
     function sleep(ms) {
