@@ -279,13 +279,57 @@
         }
         .nav-item.active { color: #f2a7b3; }
         .nav-icon { font-size: 22px; }
+        
+        .skin-selector {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+            justify-content: center;
+        }
+        .skin-btn {
+            padding: 10px 16px;
+            background: rgba(255, 255, 255, 0.95);
+            border: 2px solid transparent;
+            border-radius: 16px;
+            font-size: 20px;
+            cursor: pointer;
+            transition: 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .skin-btn:hover { transform: translateY(-2px); }
+        .skin-btn.active {
+            border-color: #f2a7b3;
+            background: rgba(242, 167, 179, 0.15);
+        }
+        .skin-name {
+            font-size: 12px;
+            color: #4a3538;
+            font-weight: 600;
+        }
     </style>
 </head>
 <body>
 <div class="container">
     <div class="page-header">
-        <div class="page-icon">💕</div>
-        <div class="page-title">爱心消除</div>
+        <div class="page-icon" id="pageIcon">💕</div>
+        <div class="page-title" id="pageTitle">爱心消除</div>
+    </div>
+    
+    <div class="skin-selector">
+        <button class="skin-btn active" data-skin="heart" onclick="setSkin('heart')">
+            <span>💕</span>
+            <span class="skin-name">爱心</span>
+        </button>
+        <button class="skin-btn" data-skin="animal" onclick="setSkin('animal')">
+            <span>🐱</span>
+            <span class="skin-name">萌宠</span>
+        </button>
+        <button class="skin-btn" data-skin="food" onclick="setSkin('food')">
+            <span>🍕</span>
+            <span class="skin-name">美食</span>
+        </button>
     </div>
     
     <div class="difficulty-selector">
@@ -405,7 +449,26 @@
         hard: { size: 10, time: 60, multiplier: 1.5, name: '困难' }
     };
     
-    const TYPES = ['💕', '💖', '💗', '💝', '❤️', '🩷'];
+    const SKINS = {
+        heart: {
+            name: '爱心',
+            icon: '💕',
+            types: ['💕', '💖', '💗', '💝', '❤️', '🩷']
+        },
+        animal: {
+            name: '萌宠',
+            icon: '🐱',
+            types: ['🐱', '🐶', '🐰', '🐻', '🐼', '🐨']
+        },
+        food: {
+            name: '美食',
+            icon: '🍕',
+            types: ['🍕', '🍔', '🍩', '🍰', '🧁', '🍪']
+        }
+    };
+    
+    let currentSkin = 'heart';
+    let TYPES = SKINS.heart.types;
     
     let currentDifficulty = 'easy';
     let boardSize = 6;
@@ -462,6 +525,23 @@
         updateHighScoreDisplay();
         
         // 开始游戏
+        startGame();
+    }
+    
+    function setSkin(skin) {
+        currentSkin = skin;
+        TYPES = SKINS[skin].types;
+        
+        // 更新UI
+        document.querySelectorAll('.skin-btn').forEach(btn => btn.classList.remove('active'));
+        event.target.closest('.skin-btn').classList.add('active');
+        
+        // 更新标题
+        const skinData = SKINS[skin];
+        document.getElementById('pageIcon').textContent = skinData.icon;
+        document.getElementById('pageTitle').textContent = skinData.name + '消除';
+        
+        // 重新开始游戏
         startGame();
     }
     
