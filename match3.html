@@ -436,16 +436,8 @@
         document.querySelectorAll('.diff-btn').forEach(btn => btn.classList.remove('active'));
         event.target.closest('.diff-btn').classList.add('active');
         
-        const config = DIFFICULTIES[diff];
-        const timerBar = document.getElementById('timerBar');
-        
-        if (config.time > 0) {
-            timerBar.style.display = 'block';
-        } else {
-            timerBar.style.display = 'none';
-        }
-        
         updateHighScoreDisplay();
+        startGame();
     }
     
     function updateHighScoreDisplay() {
@@ -472,12 +464,25 @@
         document.getElementById('moves').textContent = '0';
         document.getElementById('comboText').classList.remove('show');
         
-        generateBoard();
-        renderBoard();
+        const timerBar = document.getElementById('timerBar');
+        const timerFill = document.getElementById('timerFill');
+        const timerText = document.getElementById('timerText');
+        
+        timerBar.style.display = 'block';
         
         if (maxTime > 0) {
+            timerFill.style.width = '100%';
+            timerFill.style.background = 'linear-gradient(90deg, #f2a7b3, #d4858f)';
+            timerText.textContent = maxTime + '秒';
             startTimer();
+        } else {
+            timerFill.style.width = '100%';
+            timerFill.style.background = 'linear-gradient(90deg, #4CAF50, #45a049)';
+            timerText.textContent = '无时间限制';
         }
+        
+        generateBoard();
+        renderBoard();
         
         setTimeout(() => {
             processMatches();
