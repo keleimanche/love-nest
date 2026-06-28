@@ -742,6 +742,13 @@
         gameActive = false;
         stopTimer();
         
+        // 保存最高分
+        if (score > highScore[currentDifficulty]) {
+            highScore[currentDifficulty] = score;
+            localStorage.setItem('match3HighScore', JSON.stringify(highScore));
+            updateHighScoreDisplay();
+        }
+        
         document.getElementById('finalScore').textContent = score;
         document.getElementById('finalMoves').textContent = moves;
         document.getElementById('finalCombo').textContent = maxCombo;
