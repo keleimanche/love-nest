@@ -47,126 +47,246 @@
         }
         
         .pig-body {
-            width: 180px;
-            height: 150px;
-            background: linear-gradient(135deg, #FFB6C1 0%, #FFC0CB 50%, #FFB6C1 100%);
-            border-radius: 50% 50% 45% 45%;
+            width: 200px;
+            height: 160px;
+            background: linear-gradient(180deg, #FFD1DC 0%, #FFB6C1 30%, #FFAAB5 100%);
+            border-radius: 50% 50% 48% 48%;
             position: relative;
-            box-shadow: 0 8px 20px rgba(255, 182, 193, 0.4);
+            box-shadow: 
+                0 12px 30px rgba(255, 150, 170, 0.4),
+                inset 0 -8px 20px rgba(255, 100, 130, 0.15),
+                inset 0 8px 15px rgba(255, 255, 255, 0.3);
             transition: transform 0.3s ease;
+            animation: breathe 3s ease-in-out infinite;
+        }
+        
+        @keyframes breathe {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.02); }
         }
         
         .pig-ear {
             position: absolute;
-            width: 50px;
-            height: 60px;
+            width: 55px;
+            height: 70px;
             background: linear-gradient(135deg, #FF9AA2, #FFB6C1);
             border-radius: 50% 50% 0 0;
-            top: -30px;
+            top: -35px;
+            box-shadow: inset 0 -5px 10px rgba(200, 80, 100, 0.2);
         }
         
         .pig-ear.left {
-            left: 20px;
-            transform: rotate(-30deg);
+            left: 15px;
+            transform: rotate(-35deg);
+            animation: earWiggle 4s ease-in-out infinite;
         }
         
         .pig-ear.right {
-            right: 20px;
-            transform: rotate(30deg);
+            right: 15px;
+            transform: rotate(35deg);
+            animation: earWiggle 4s ease-in-out infinite 0.5s;
+        }
+        
+        @keyframes earWiggle {
+            0%, 100% { transform: rotate(-35deg); }
+            50% { transform: rotate(-30deg); }
+        }
+        
+        .pig-ear.right {
+            animation-name: earWiggleRight;
+        }
+        
+        @keyframes earWiggleRight {
+            0%, 100% { transform: rotate(35deg); }
+            50% { transform: rotate(30deg); }
         }
         
         .pig-ear::after {
             content: '';
             position: absolute;
-            width: 30px;
-            height: 40px;
-            background: #FFCCE0;
+            width: 35px;
+            height: 50px;
+            background: linear-gradient(135deg, #FFCCE0, #FFD9E8);
             border-radius: 50% 50% 0 0;
-            top: 10px;
+            top: 8px;
             left: 10px;
         }
         
         .pig-eye {
             position: absolute;
-            width: 24px;
-            height: 30px;
-            background: #2C1810;
+            width: 30px;
+            height: 38px;
+            background: linear-gradient(180deg, #3D2428, #2C1810);
             border-radius: 50%;
-            top: 35px;
+            top: 30px;
+            animation: blink 5s ease-in-out infinite;
         }
         
         .pig-eye.left {
-            left: 35px;
+            left: 38px;
+            animation-delay: 0s;
         }
         
         .pig-eye.right {
-            right: 35px;
+            right: 38px;
+            animation-delay: 2.5s;
+        }
+        
+        @keyframes blink {
+            0%, 95%, 100% { transform: scaleY(1); }
+            97% { transform: scaleY(0.1); }
+        }
+        
+        .pig-eye::before {
+            content: '';
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            background: white;
+            border-radius: 50%;
+            top: 6px;
+            left: 5px;
         }
         
         .pig-eye::after {
             content: '';
             position: absolute;
-            width: 8px;
-            height: 8px;
+            width: 6px;
+            height: 6px;
             background: white;
             border-radius: 50%;
-            top: 6px;
-            left: 6px;
+            top: 18px;
+            left: 16px;
+            opacity: 0.7;
         }
         
         .pig-cheek {
             position: absolute;
-            width: 35px;
-            height: 20px;
-            background: rgba(255, 150, 170, 0.6);
+            width: 40px;
+            height: 24px;
+            background: radial-gradient(ellipse, rgba(255, 130, 160, 0.5), transparent);
             border-radius: 50%;
-            top: 55px;
+            top: 60px;
+            filter: blur(2px);
         }
         
         .pig-cheek.left {
-            left: 10px;
+            left: 5px;
         }
         
         .pig-cheek.right {
-            right: 10px;
+            right: 5px;
         }
         
         .pig-nose {
             position: absolute;
-            width: 60px;
-            height: 40px;
-            background: linear-gradient(135deg, #FF9AA2, #FFB6C1);
+            width: 70px;
+            height: 45px;
+            background: linear-gradient(180deg, #FF9AA2, #FFB6C1);
             border-radius: 50%;
             top: 70px;
             left: 50%;
             transform: translateX(-50%);
-            box-shadow: 0 2px 8px rgba(200, 100, 120, 0.3);
+            box-shadow: 
+                0 4px 10px rgba(200, 100, 120, 0.3),
+                inset 0 -3px 8px rgba(200, 80, 100, 0.2);
         }
         
         .pig-nostril {
             position: absolute;
-            width: 12px;
-            height: 16px;
-            background: #D4858F;
+            width: 14px;
+            height: 18px;
+            background: linear-gradient(180deg, #C57A85, #D4858F);
             border-radius: 50%;
-            top: 12px;
+            top: 13px;
+            box-shadow: inset 0 2px 4px rgba(100, 50, 60, 0.3);
         }
         
         .pig-nostril.left {
-            left: 12px;
+            left: 14px;
         }
         
         .pig-nostril.right {
-            right: 12px;
+            right: 14px;
+        }
+        
+        .pig-mouth {
+            position: absolute;
+            width: 20px;
+            height: 10px;
+            border-bottom: 3px solid #D4858F;
+            border-radius: 0 0 50% 50%;
+            top: 115px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        
+        .pig-tail {
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            right: -15px;
+            top: 60px;
+            animation: tailWag 1s ease-in-out infinite;
+        }
+        
+        .pig-tail::before {
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            border: 4px solid #FF9AA2;
+            border-radius: 50%;
+            border-right-color: transparent;
+            border-bottom-color: transparent;
+            transform: rotate(45deg);
+        }
+        
+        @keyframes tailWag {
+            0%, 100% { transform: rotate(-10deg); }
+            50% { transform: rotate(10deg); }
+        }
+        
+        .pig-hoof {
+            position: absolute;
+            width: 25px;
+            height: 15px;
+            background: linear-gradient(180deg, #FF9AA2, #FFB6C1);
+            border-radius: 50%;
+            bottom: -5px;
+            box-shadow: 0 3px 8px rgba(200, 100, 120, 0.3);
+        }
+        
+        .pig-hoof.front-left {
+            left: 30px;
+        }
+        
+        .pig-hoof.front-right {
+            right: 30px;
+        }
+        
+        .pig-bow {
+            position: absolute;
+            top: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 35px;
+            animation: bowBounce 2s ease-in-out infinite;
+        }
+        
+        @keyframes bowBounce {
+            0%, 100% { transform: translateX(-50%) translateY(0); }
+            50% { transform: translateX(-50%) translateY(-5px); }
         }
         
         .pig-expression {
             position: absolute;
             top: -10px;
-            right: -20px;
-            font-size: 40px;
+            right: -30px;
+            font-size: 45px;
             animation: bounce 2s infinite;
             z-index: 10;
+            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1));
         }
         
         @keyframes bounce {
@@ -408,6 +528,7 @@
     <div class="pig-card">
         <div class="pig-container" id="pigContainer">
             <div class="pig-body" id="pigBody">
+                <div class="pig-bow">🎀</div>
                 <div class="pig-ear left"></div>
                 <div class="pig-ear right"></div>
                 <div class="pig-eye left" id="pigEyeLeft"></div>
@@ -418,6 +539,10 @@
                     <div class="pig-nostril left"></div>
                     <div class="pig-nostril right"></div>
                 </div>
+                <div class="pig-mouth"></div>
+                <div class="pig-tail"></div>
+                <div class="pig-hoof front-left"></div>
+                <div class="pig-hoof front-right"></div>
             </div>
             <div class="pig-expression" id="pigExpression">😊</div>
             <div class="food-fly" id="foodFly"></div>
