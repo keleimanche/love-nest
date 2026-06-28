@@ -46,18 +46,127 @@
             margin: 20px 0;
         }
         
-        .pig-emoji {
-            font-size: 120px;
+        .pig-body {
+            width: 180px;
+            height: 150px;
+            background: linear-gradient(135deg, #FFB6C1 0%, #FFC0CB 50%, #FFB6C1 100%);
+            border-radius: 50% 50% 45% 45%;
+            position: relative;
+            box-shadow: 0 8px 20px rgba(255, 182, 193, 0.4);
             transition: transform 0.3s ease;
-            display: block;
+        }
+        
+        .pig-ear {
+            position: absolute;
+            width: 50px;
+            height: 60px;
+            background: linear-gradient(135deg, #FF9AA2, #FFB6C1);
+            border-radius: 50% 50% 0 0;
+            top: -30px;
+        }
+        
+        .pig-ear.left {
+            left: 20px;
+            transform: rotate(-30deg);
+        }
+        
+        .pig-ear.right {
+            right: 20px;
+            transform: rotate(30deg);
+        }
+        
+        .pig-ear::after {
+            content: '';
+            position: absolute;
+            width: 30px;
+            height: 40px;
+            background: #FFCCE0;
+            border-radius: 50% 50% 0 0;
+            top: 10px;
+            left: 10px;
+        }
+        
+        .pig-eye {
+            position: absolute;
+            width: 24px;
+            height: 30px;
+            background: #2C1810;
+            border-radius: 50%;
+            top: 35px;
+        }
+        
+        .pig-eye.left {
+            left: 35px;
+        }
+        
+        .pig-eye.right {
+            right: 35px;
+        }
+        
+        .pig-eye::after {
+            content: '';
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background: white;
+            border-radius: 50%;
+            top: 6px;
+            left: 6px;
+        }
+        
+        .pig-cheek {
+            position: absolute;
+            width: 35px;
+            height: 20px;
+            background: rgba(255, 150, 170, 0.6);
+            border-radius: 50%;
+            top: 55px;
+        }
+        
+        .pig-cheek.left {
+            left: 10px;
+        }
+        
+        .pig-cheek.right {
+            right: 10px;
+        }
+        
+        .pig-nose {
+            position: absolute;
+            width: 60px;
+            height: 40px;
+            background: linear-gradient(135deg, #FF9AA2, #FFB6C1);
+            border-radius: 50%;
+            top: 70px;
+            left: 50%;
+            transform: translateX(-50%);
+            box-shadow: 0 2px 8px rgba(200, 100, 120, 0.3);
+        }
+        
+        .pig-nostril {
+            position: absolute;
+            width: 12px;
+            height: 16px;
+            background: #D4858F;
+            border-radius: 50%;
+            top: 12px;
+        }
+        
+        .pig-nostril.left {
+            left: 12px;
+        }
+        
+        .pig-nostril.right {
+            right: 12px;
         }
         
         .pig-expression {
             position: absolute;
-            top: 15px;
-            right: 0;
-            font-size: 36px;
+            top: -10px;
+            right: -20px;
+            font-size: 40px;
             animation: bounce 2s infinite;
+            z-index: 10;
         }
         
         @keyframes bounce {
@@ -91,7 +200,7 @@
             animation: shake 0.5s infinite;
         }
         
-        .pig-eat {
+        .pig-body.pig-eat {
             animation: eat 0.3s ease;
         }
         
@@ -298,7 +407,18 @@
     
     <div class="pig-card">
         <div class="pig-container" id="pigContainer">
-            <div class="pig-emoji" id="pigEmoji">🐷</div>
+            <div class="pig-body" id="pigBody">
+                <div class="pig-ear left"></div>
+                <div class="pig-ear right"></div>
+                <div class="pig-eye left" id="pigEyeLeft"></div>
+                <div class="pig-eye right" id="pigEyeRight"></div>
+                <div class="pig-cheek left"></div>
+                <div class="pig-cheek right"></div>
+                <div class="pig-nose">
+                    <div class="pig-nostril left"></div>
+                    <div class="pig-nostril right"></div>
+                </div>
+            </div>
             <div class="pig-expression" id="pigExpression">😊</div>
             <div class="food-fly" id="foodFly"></div>
         </div>
@@ -386,8 +506,10 @@
     const pigRef = db.ref('pig');
     
     const pigContainer = document.getElementById('pigContainer');
-    const pigEmoji = document.getElementById('pigEmoji');
+    const pigBody = document.getElementById('pigBody');
     const pigExpression = document.getElementById('pigExpression');
+    const pigEyeLeft = document.getElementById('pigEyeLeft');
+    const pigEyeRight = document.getElementById('pigEyeRight');
     const hungerFill = document.getElementById('hungerFill');
     const hungerPercent = document.getElementById('hungerPercent');
     const pigStatus = document.getElementById('pigStatus');
@@ -452,33 +574,27 @@
         pigContainer.classList.remove('pig-shake');
         
         if (hunger >= 100) {
-            pigEmoji.textContent = '🐷';
             pigExpression.textContent = '😵';
             pigStatus.textContent = '😵 吃撑了！需要消化一下...';
             pigContainer.classList.add('pig-shake');
             hungerFill.style.background = 'linear-gradient(90deg, #ff6b6b, #ee5a52)';
         } else if (hunger >= 80) {
-            pigEmoji.textContent = '🐷';
             pigExpression.textContent = '😋';
             pigStatus.textContent = '😋 饱饱的，好幸福~';
             hungerFill.style.background = 'linear-gradient(90deg, #4CAF50, #45a049)';
         } else if (hunger >= 60) {
-            pigEmoji.textContent = '🐷';
             pigExpression.textContent = '😊';
             pigStatus.textContent = '😊 刚刚好，开心~';
             hungerFill.style.background = 'linear-gradient(90deg, #f2a7b3, #e88798)';
         } else if (hunger >= 40) {
-            pigEmoji.textContent = '🐷';
             pigExpression.textContent = '😐';
             pigStatus.textContent = '😐 还可以，再来点也可以';
             hungerFill.style.background = 'linear-gradient(90deg, #f2a7b3, #e88798)';
         } else if (hunger >= 20) {
-            pigEmoji.textContent = '🐽';
             pigExpression.textContent = '😟';
             pigStatus.textContent = '😟 有点饿了...';
             hungerFill.style.background = 'linear-gradient(90deg, #ffa726, #ff9800)';
         } else {
-            pigEmoji.textContent = '🐽';
             pigExpression.textContent = '😢';
             pigStatus.textContent = '😢 饿坏了！快喂喂我吧~';
             hungerFill.style.background = 'linear-gradient(90deg, #ff6b6b, #ee5a52)';
@@ -511,8 +627,8 @@
         }, 800);
         
         // 吃食动画
-        pigEmoji.classList.add('pig-eat');
-        setTimeout(() => pigEmoji.classList.remove('pig-eat'), 300);
+        pigBody.classList.add('pig-eat');
+        setTimeout(() => pigBody.classList.remove('pig-eat'), 300);
         
         showToast(`${food} 真好吃！饱食度 +${value}`);
     }
