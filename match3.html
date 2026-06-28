@@ -422,22 +422,46 @@
     let gameActive = false;
     
     function init() {
+        console.log('=== 初始化爱心消消乐 ===');
+        console.log('当前URL:', window.location.href);
+        console.log('localStorage可用:', typeof localStorage !== 'undefined');
+        
         try {
             const saved = localStorage.getItem('match3HighScore');
-            console.log('读取到的保存数据:', saved);
-            highScore = saved ? JSON.parse(saved) : {};
+            console.log('读取到的原始数据:', saved);
+            
+            if (saved) {
+                highScore = JSON.parse(saved);
+                console.log('解析后的数据:', highScore);
+            } else {
+                console.log('没有保存的数据，使用默认值');
+                highScore = {};
+            }
         } catch (e) {
             console.error('读取最高分失败:', e);
             highScore = {};
         }
         
         // 确保所有难度都有初始值
-        if (typeof highScore.easy !== 'number') highScore.easy = 0;
-        if (typeof highScore.medium !== 'number') highScore.medium = 0;
-        if (typeof highScore.hard !== 'number') highScore.hard = 0;
+        if (typeof highScore.easy !== 'number') {
+            console.log('初始化简单模式分数为0');
+            highScore.easy = 0;
+        }
+        if (typeof highScore.medium !== 'number') {
+            console.log('初始化普通模式分数为0');
+            highScore.medium = 0;
+        }
+        if (typeof highScore.hard !== 'number') {
+            console.log('初始化困难模式分数为0');
+            highScore.hard = 0;
+        }
         
-        console.log('初始化后的最高分:', highScore);
+        console.log('初始化完成，最高分数据:', highScore);
+        
+        // 立即显示最高分
         updateHighScoreDisplay();
+        
+        // 开始游戏
         startGame();
     }
     
@@ -645,8 +669,15 @@
         if (maxTime === 0 && score > (highScore[currentDifficulty] || 0)) {
             highScore[currentDifficulty] = score;
             try {
-                localStorage.setItem('match3HighScore', JSON.stringify(highScore));
+                const saveStr = JSON.stringify(highScore);
+                localStorage.setItem('match3HighScore', saveStr);
                 console.log('简单模式保存成功:', highScore);
+                console.log('保存的字符串:', saveStr);
+                
+                // 验证保存是否成功
+                const verify = localStorage.getItem('match3HighScore');
+                console.log('验证读取:', verify);
+                
                 updateHighScoreDisplay();
             } catch (e) {
                 console.error('保存失败:', e);
@@ -761,14 +792,22 @@
         stopTimer();
         
         // 保存最高分
-        console.log('游戏结束，当前分数:', score, '当前难度:', currentDifficulty);
+        console.log('=== 游戏结束 ===');
+        console.log('当前分数:', score);
+        console.log('当前难度:', currentDifficulty);
         console.log('保存前最高分:', highScore);
         
         if (score > (highScore[currentDifficulty] || 0)) {
             highScore[currentDifficulty] = score;
             try {
-                localStorage.setItem('match3HighScore', JSON.stringify(highScore));
+                const saveStr = JSON.stringify(highScore);
+                localStorage.setItem('match3HighScore', saveStr);
                 console.log('保存成功，新最高分:', highScore);
+                console.log('保存的字符串:', saveStr);
+                
+                // 验证保存是否成功
+                const verify = localStorage.getItem('match3HighScore');
+                console.log('验证读取:', verify);
             } catch (e) {
                 console.error('保存失败:', e);
             }
