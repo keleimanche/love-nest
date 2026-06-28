@@ -317,9 +317,6 @@
 
 <script src="common.js"></script>
 <script>
-    initFirebase();
-    setupHeartEffect();
-
     const TASKS = [
         { text: "给对方点一杯TA喜欢的奶茶 🧋", points: 15 },
         { text: "分享一首你现在正在听的歌 🎵", points: 10 },
@@ -354,6 +351,9 @@
         { icon: "👑", name: "皇冠", unlock: 800 }
     ];
 
+    initFirebase();
+    setupHeartEffect();
+    
     const db = getDb();
     const gachaRef = db.ref('gacha');
 
@@ -469,8 +469,10 @@
     }
 
     function loadData() {
+        console.log('开始加载扭蛋数据...');
         gachaRef.on('value', (snap) => {
             const data = snap.val();
+            console.log('Firebase返回数据:', data);
             if (data) {
                 gachaData = {
                     intimacy: data.intimacy || 0,
@@ -481,11 +483,23 @@
                 };
             }
             render();
+        }, (error) => {
+            console.error('Firebase读取失败:', error);
         });
     }
 
     function doGacha() {
+        console.log('扭蛋按钮被点击');
+        console.log('gachaBtn.disabled:', gachaBtn.disabled);
+        
+        if (gachaBtn.disabled) {
+            console.log('按钮被禁用，无法扭蛋');
+            return;
+        }
+        
         const task = TASKS[Math.floor(Math.random() * TASKS.length)];
+        console.log('抽取到任务:', task);
+        
         gachaData.currentTask = task;
         gachaData.lastGachaTime = Date.now();
         
